@@ -1,4 +1,4 @@
-package io.github.orioncraftmc.stretchkt.style
+package io.github.orioncraftmc.stretchkt.style.enums
 
 import io.github.orioncraftmc.stretchkt.number.StretchNumber
 

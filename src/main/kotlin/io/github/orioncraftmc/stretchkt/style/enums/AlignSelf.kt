@@ -1,4 +1,4 @@
-package io.github.orioncraftmc.stretchkt.style
+package io.github.orioncraftmc.stretchkt.style.enums
 
 enum class AlignSelf {
     Auto, FlexStart, FlexEnd, Center, Baseline, Stretch;
