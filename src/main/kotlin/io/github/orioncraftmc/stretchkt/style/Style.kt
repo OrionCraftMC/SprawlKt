@@ -3,6 +3,7 @@ package io.github.orioncraftmc.stretchkt.style
 import io.github.orioncraftmc.stretchkt.geometry.Rect
 import io.github.orioncraftmc.stretchkt.geometry.Size
 import io.github.orioncraftmc.stretchkt.geometry.defaultDimensionRect
+import io.github.orioncraftmc.stretchkt.number.StretchNumber
 import io.github.orioncraftmc.stretchkt.style.enums.*
 
 data class Style(
@@ -26,7 +27,7 @@ data class Style(
     val size: Size<StretchDimension> = Size.undefined(),
     val minSize: Size<StretchDimension> = Size.undefined(),
     val maxSize: Size<StretchDimension> = Size.undefined(),
-    val aspectRatio: Number,
+    val aspectRatio: StretchNumber = StretchNumber.Undefined,
 ) {
 
     fun minMainSize(direction: FlexDirection): StretchDimension {
