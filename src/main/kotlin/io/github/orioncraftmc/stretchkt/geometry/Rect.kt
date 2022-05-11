@@ -1,15 +1,14 @@
 package io.github.orioncraftmc.stretchkt.geometry
 
-import io.github.orioncraftmc.stretchkt.number.StretchNumber
 
-data class Rect(
-    val start: StretchNumber,
-    val end: StretchNumber,
-    val top: StretchNumber /* Just like me */,
-    val bottom: StretchNumber /* Just like KingTux */
+data class Rect<T>(
+    val start: T,
+    val end: T,
+    val top: T /* Just like me */,
+    val bottom: T /* Just like KingTux */
 ) {
 
-    fun map(transform: (StretchNumber) -> StretchNumber): Rect {
+    fun map(transform: (T) -> T): Rect<T> {
         return Rect(
             start = transform(start),
             end = transform(end),
@@ -18,7 +17,7 @@ data class Rect(
         )
     }
 
-    fun <U> zipSize(size: Size, transform: (StretchNumber, StretchNumber) -> StretchNumber): Rect {
+    fun <U, R> zipSize(size: Size<U>, transform: (T, U) -> R): Rect<R> {
         return Rect(
             start = transform(start, size.width),
             end = transform(end, size.width),
@@ -26,13 +25,4 @@ data class Rect(
             bottom = transform(bottom, size.height)
         )
     }
-
-    val horizontal: StretchNumber
-        get() = start + end
-
-    val vertical: StretchNumber
-        get() = top + bottom /* Together at last */
-
-
-
 }
