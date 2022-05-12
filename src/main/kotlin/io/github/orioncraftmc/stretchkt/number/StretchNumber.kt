@@ -13,7 +13,6 @@ sealed class StretchNumber : OrElse<Float>, MathOpsTrait<StretchNumber> {
     val isUndefined: Boolean
         get() = !isDefined
 
-    // TODO PORT: Make these methods for combination of Float and StretchNumber
     fun maybeMin(other: StretchNumber): StretchNumber {
         if (this is Defined && other is Defined) return from(min(this.value, other.value))
         if (this is Defined) return this

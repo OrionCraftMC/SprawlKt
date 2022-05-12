@@ -10,4 +10,12 @@ fun Size<StretchDimension>.resolve(parent: Size<StretchNumber>): Size<StretchNum
     )
 }
 
+@JvmName("resolveSizeFloat")
+fun Size<StretchDimension>.resolve(parent: Size<Float>): Size<StretchNumber> {
+    return Size(
+        width = this.width.resolve(StretchNumber.from(parent.width)),
+        height = this.height.resolve(StretchNumber.from(parent.height))
+    )
+}
+
 internal fun Size<Float>.toStretchNumberSize() = map { StretchNumber.from(it) }

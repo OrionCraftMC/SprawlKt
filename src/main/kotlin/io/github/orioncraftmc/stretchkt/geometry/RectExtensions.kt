@@ -1,6 +1,5 @@
 package io.github.orioncraftmc.stretchkt.geometry
 
-import io.github.orioncraftmc.stretchkt.number.StretchNumber
 import io.github.orioncraftmc.stretchkt.style.enums.FlexDirection
 import io.github.orioncraftmc.stretchkt.style.enums.StretchDimension
 import io.github.orioncraftmc.stretchkt.traits.MathOpsTrait
@@ -12,6 +11,12 @@ internal val defaultDimensionRect
         StretchDimension.Undefined,
         StretchDimension.Undefined
     )
+
+val Rect<Float>.horizontal: Float
+    get() = start + end
+
+val Rect<Float>.vertical: Float
+    get() = top + bottom /* Together at last */
 
 val <R, T : MathOpsTrait<R>> Rect<T>.horizontal: R
     get() = start + end
@@ -35,5 +40,19 @@ fun <R, T : MathOpsTrait<R>> Rect<T>.cross(direction: FlexDirection): R {
     }
 }
 
-@Deprecated("Usage of Rect<Float>#toStretchNumberRect is usually not correct and will produce useless objects")
-internal fun Rect<Float>.toStretchNumberRect() = map { StretchNumber.from(it) }
+fun Rect<Float>.main(direction: FlexDirection): Float {
+    return if (direction.isRow()) {
+        this.horizontal
+    } else {
+        this.vertical
+    }
+}
+
+fun Rect<Float>.cross(direction: FlexDirection): Float {
+    return if (direction.isRow()) {
+        this.vertical
+    } else {
+        this.horizontal
+    }
+}
+

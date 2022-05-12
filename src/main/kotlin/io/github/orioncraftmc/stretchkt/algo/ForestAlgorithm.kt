@@ -1,7 +1,6 @@
 package io.github.orioncraftmc.stretchkt.algo
 
-import io.github.orioncraftmc.stretchkt.extensions.splitAtIndex
-import io.github.orioncraftmc.stretchkt.extensions.toStretchNumber
+import io.github.orioncraftmc.stretchkt.extensions.*
 import io.github.orioncraftmc.stretchkt.forest.Forest
 import io.github.orioncraftmc.stretchkt.forest.NodeData
 import io.github.orioncraftmc.stretchkt.geometry.*
@@ -26,13 +25,13 @@ internal fun Forest.computeInternal(
         if (cache.performLayout || !performLayout) {
 
             val widthCompatible = if (nodeSize.width is StretchNumber.Defined) {
-                abs(nodeSize.width.asFloat() - cache.result.size.width) < Math.ulp(1f)
+                abs(nodeSize.width - cache.result.size.width) < Math.ulp(1f)
             } else {
                 cache.nodeSize.width.isUndefined
             }
 
             val heightCompatible = if (nodeSize.height is StretchNumber.Defined) {
-                abs(nodeSize.height.asFloat() - cache.result.size.height) < Math.ulp(1f)
+                abs(nodeSize.height - cache.result.size.height) < Math.ulp(1f)
             } else {
                 cache.nodeSize.height.isUndefined
             }
@@ -66,7 +65,7 @@ internal fun Forest.computeInternal(
         end = padding.end + border.end,
         top = padding.top + border.top,
         bottom = padding.bottom + border.bottom,
-    ).toStretchNumberRect()
+    )
 
 
     var nodeInnerSize = Size(
@@ -91,8 +90,8 @@ internal fun Forest.computeInternal(
 
         return ComputeResult(
             size = Size(
-                width = (nodeSize.width.orElse(StretchNumber.zero) + paddingBorder.horizontal).asFloat(),
-                height = (nodeSize.height.orElse(StretchNumber.zero) + paddingBorder.vertical).asFloat(),
+                width = (nodeSize.width.orElse(StretchNumber.zero) + paddingBorder.horizontal),
+                height = (nodeSize.height.orElse(StretchNumber.zero) + paddingBorder.vertical),
             ),
         )
     }
@@ -110,8 +109,8 @@ internal fun Forest.computeInternal(
     //    in that dimension and use that value. This might result in an infinite value.
 
     var availableSpace = Size(
-        width = nodeSize.width.orElse(parentSize.width - margin.toStretchNumberRect().horizontal) - paddingBorder.horizontal,
-        height = nodeSize.height.orElse(parentSize.height - margin.toStretchNumberRect().vertical) - paddingBorder.vertical,
+        width = nodeSize.width.orElse(parentSize.width - margin.horizontal) - paddingBorder.horizontal,
+        height = nodeSize.height.orElse(parentSize.height - margin.vertical) - paddingBorder.vertical,
     )
 
     var flexItems = node.children
@@ -212,7 +211,7 @@ internal fun Forest.computeInternal(
             && childStyle.alignSelf(node.style) == AlignSelf.Stretch
             && isColumn
         ) {
-            availableSpace.width
+            StretchNumber.from(availableSpace.width)
         } else {
             child.size.width
         }
@@ -221,7 +220,7 @@ internal fun Forest.computeInternal(
             && childStyle.alignSelf(node.style) == AlignSelf.Stretch
             && isRow
         ) {
-            availableSpace.height
+            StretchNumber.from(availableSpace.height)
         } else {
             child.size.height
         }
@@ -232,16 +231,15 @@ internal fun Forest.computeInternal(
                 width = width.maybeMax(child.minSize.width).maybeMin(child.maxSize.width),
                 height = height.maybeMax(child.minSize.height).maybeMin(child.maxSize.height),
             ),
-            availableSpace,
+            availableSpace.toStretchNumberSize(),
             performLayout = false,
             mainSize = true,
         )
             .size
             .main(dir)
-            .toStretchNumber()
             .maybeMax(child.minSize.main(dir))
             .maybeMin(child.maxSize.main(dir))
-            .asFloat()
+
 
     }
 
@@ -249,8 +247,8 @@ internal fun Forest.computeInternal(
     // used min and max main sizes (and flooring the content box size at zero).
 
     for (child in flexItems) {
-        child.innerFlexBasis = child.flexBasis - child.padding.toStretchNumberRect().main(dir)
-            .asFloat() - child.border.toStretchNumberRect().main(dir).asFloat()
+        child.innerFlexBasis = child.flexBasis - child.padding.main(dir)
+        -child.border.main(dir)
 
         // TODO - not really spec abiding but needs to be done somewhere. probably somewhere else though.
         // The following logic was developed not from the spec but by trial and error looking into how
@@ -260,12 +258,12 @@ internal fun Forest.computeInternal(
             computeInternal(
                 node = child.node,
                 nodeSize = Size.undefinedNumber(),
-                parentSize = availableSpace,
+                parentSize = availableSpace.toStretchNumberSize(),
                 performLayout = false,
                 mainSize = false
             )
                 .size
-                .main(dir).toStretchNumber()
+                .main(dir)
                 .maybeMax(child.minSize.main(dir))
                 .maybeMin(child.size.main(dir))
 
@@ -273,14 +271,14 @@ internal fun Forest.computeInternal(
             .hypotheticalInnerSize
             .setMain(
                 dir,
-                child.flexBasis.toStretchNumber().maybeMax(minMain).maybeMin(child.maxSize.main(dir)).asFloat()
+                child.flexBasis.maybeMax(minMain).maybeMin(child.maxSize.main(dir))
             )
 
         child
             .hypotheticalOuterSize
             .setMain(
                 dir,
-                child.hypotheticalInnerSize.main(dir) + child.margin.toStretchNumberRect().main(dir).asFloat()
+                child.hypotheticalInnerSize.main(dir) + child.margin.main(dir)
             )
     }
 
@@ -315,8 +313,8 @@ internal fun Forest.computeInternal(
                         lineLength += child.hypotheticalOuterSize.main(dir)
                         val main = availableSpace.main(dir)
 
-                        if (main is StretchNumber.Defined) {
-                            lineLength > main.value && idx != 0
+                        if (main.isDefined()) {
+                            lineLength > main && idx != 0
                         } else {
                             false
                         }
@@ -355,7 +353,7 @@ internal fun Forest.computeInternal(
         for (child in line.items) {
             // TODO - This is not found by reading the spec. Maybe this can be done in some other place
             // instead. This was found by trial and error fixing tests to align with webkit output.
-            if (nodeInnerSize.main(dir).isUndefined && isRow) {
+            if (nodeInnerSize.main(dir).isUndefined() && isRow) {
                 child.targetSize.setMain(
                     dir,
                     computeInternal(
@@ -368,16 +366,14 @@ internal fun Forest.computeInternal(
                                 .maybeMax(child.minSize.height)
                                 .maybeMin(child.maxSize.height),
                         ),
-                        parentSize = availableSpace,
+                        parentSize = availableSpace.toStretchNumberSize(),
                         performLayout = false,
                         mainSize = false,
                     )
                         .size
                         .main(dir)
-                        .toStretchNumber()
                         .maybeMax(child.minSize.main(dir))
                         .maybeMin(child.maxSize.main(dir))
-                        .asFloat()
                 )
             } else {
                 child.targetSize.setMain(dir, child.hypotheticalInnerSize.main(dir))
@@ -388,7 +384,7 @@ internal fun Forest.computeInternal(
 
             child.outerTargetSize.setMain(
                 dir,
-                (child.targetSize.main(dir).toStretchNumber() + child.margin.toStretchNumberRect().main(dir)).asFloat()
+                (child.targetSize.main(dir) + child.margin.main(dir))
             )
 
             var childStyle = child.node.style
@@ -406,12 +402,10 @@ internal fun Forest.computeInternal(
 
         var usedSpace: Float = line.items
             .map { child ->
-                (child.margin.toStretchNumberRect()
-                    .main(dir) + (if (child.frozen) child.targetSize.main(dir) else child.flexBasis).toStretchNumber())
-                    .asFloat()
+                (child.margin.main(dir) + (if (child.frozen) child.targetSize.main(dir) else child.flexBasis))
             }.sum()
 
-        var initialFreeSpace = (nodeInnerSize.main(dir).asFloat() - usedSpace).toStretchNumber().orElse(0.0f);
+        var initialFreeSpace = (nodeInnerSize.main(dir) - usedSpace).orElse(0.0f);
 
     }
 
