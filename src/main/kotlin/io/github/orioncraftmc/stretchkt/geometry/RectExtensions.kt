@@ -35,4 +35,5 @@ fun <R, T : MathOpsTrait<R>> Rect<T>.cross(direction: FlexDirection): R {
     }
 }
 
+@Deprecated("Usage of Rect<Float>#toStretchNumberRect is usually not correct and will produce useless objects")
 internal fun Rect<Float>.toStretchNumberRect() = map { StretchNumber.from(it) }

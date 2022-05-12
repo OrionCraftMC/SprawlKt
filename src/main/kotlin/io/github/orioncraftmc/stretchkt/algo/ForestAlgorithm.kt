@@ -328,21 +328,22 @@ internal fun Forest.computeInternal(
             }
         }
     }
-/*
     // 6. Resolve the flexible lengths of all the flex items to find their used main size.
     //    See §9.7 Resolving Flexible Lengths.
     //
     // 9.7. Resolving Flexible Lengths
 
-    for line in &mut flexLines {
+    for (line in flexLines) {
+
         // 1. Determine the used flex factor. Sum the outer hypothetical main sizes of all
         //    items on the line. If the sum is less than the flex container’s inner main size,
         //    use the flex grow factor for the rest of this algorithm; otherwise, use the
         //    flex shrink factor.
 
-        var usedFlexFactor: Float = line.items.iter().map(|child| child.hypotheticalOuterSize.main(dir)).sum();
-        var growing = usedFlexFactor < nodeInnerSize.main(dir).orElse(0.0);
-        var shrinking = !growing;
+        var usedFlexFactor: Float = line.items.map { it.hypotheticalOuterSize.main(dir) }.sum()
+        var growing = usedFlexFactor < nodeInnerSize.main(dir).orElse(0.0f)
+        var shrinking = !growing
+
 
         // 2. Size inflexible items. Freeze, setting its target main size to its hypothetical main size
         //    - Any item that has a flex factor of zero
@@ -351,46 +352,51 @@ internal fun Forest.computeInternal(
         //    - If using the flex shrink factor: any item that has a flex base size
         //      smaller than its hypothetical main size
 
-        for child in line.items.iterMut() {
+        for (child in line.items) {
             // TODO - This is not found by reading the spec. Maybe this can be done in some other place
             // instead. This was found by trial and error fixing tests to align with webkit output.
-            if nodeInnerSize.main(dir).isUndefined() && isRow {
+            if (nodeInnerSize.main(dir).isUndefined && isRow) {
                 child.targetSize.setMain(
                     dir,
-                    self.computeInternal(
-                        child.node,
-                        Size {
+                    computeInternal(
+                        node = child.node,
+                        nodeSize = Size(
                             width = child.size.width.maybeMax(child.minSize.width).maybeMin(child.maxSize.width),
                             height = child
-                            .size
-                            .height
-                            .maybeMax(child.minSize.height)
-                            .maybeMin(child.maxSize.height),
-                        },
-                        availableSpace,
-                        false,
-                        false,
+                                .size
+                                .height
+                                .maybeMax(child.minSize.height)
+                                .maybeMin(child.maxSize.height),
+                        ),
+                        parentSize = availableSpace,
+                        performLayout = false,
+                        mainSize = false,
                     )
                         .size
                         .main(dir)
+                        .toStretchNumber()
                         .maybeMax(child.minSize.main(dir))
-                        .maybeMin(child.maxSize.main(dir)),
-                );
+                        .maybeMin(child.maxSize.main(dir))
+                        .asFloat()
+                )
             } else {
-                child.targetSize.setMain(dir, child.hypotheticalInnerSize.main(dir));
+                child.targetSize.setMain(dir, child.hypotheticalInnerSize.main(dir))
             }
 
             // TODO this should really only be set inside the if-statement below but
             // that causes the targetMainSize to never be set for some items
 
-            child.outerTargetSize.setMain(dir, child.targetSize.main(dir) + child.margin.main(dir));
+            child.outerTargetSize.setMain(
+                dir,
+                (child.targetSize.main(dir).toStretchNumber() + child.margin.toStretchNumberRect().main(dir)).asFloat()
+            )
 
-            var childStyle = &self.nodes[child.node].style;
-            if (childStyle.flexGrow == 0.0 && childStyle.flexShrink == 0.0)
-                    || (growing && child.flexBasis > child.hypotheticalInnerSize.main(dir))
-                    || (shrinking && child.flexBasis < child.hypotheticalInnerSize.main(dir))
-            {
-                child.frozen = true;
+            var childStyle = child.node.style
+            if ((childStyle.flexGrow == 0.0f && childStyle.flexShrink == 0.0f)
+                || (growing && child.flexBasis > child.hypotheticalInnerSize.main(dir))
+                || (shrinking && child.flexBasis < child.hypotheticalInnerSize.main(dir))
+            ) {
+                child.frozen = true
             }
         }
 
@@ -398,15 +404,19 @@ internal fun Forest.computeInternal(
         //    and subtract this from the flex container’s inner main size. For frozen items,
         //    use their outer target main size; for other items, use their outer flex base size.
 
-        var usedSpace: Float = line
-                .items
-            .iter()
-            .map(|child| {
-            child.margin.main(dir) + if child.frozen { child.targetSize.main(dir) } else { child.flexBasis }
-        })
-        .sum();
+        var usedSpace: Float = line.items
+            .map { child ->
+                (child.margin.toStretchNumberRect()
+                    .main(dir) + (if (child.frozen) child.targetSize.main(dir) else child.flexBasis).toStretchNumber())
+                    .asFloat()
+            }.sum()
 
-        var initialFreeSpace = (nodeInnerSize.main(dir) - usedSpace).orElse(0.0);
+        var initialFreeSpace = (nodeInnerSize.main(dir).asFloat() - usedSpace).toStretchNumber().orElse(0.0f);
+
+    }
+
+/*
+
 
         // 4. Loop
 
