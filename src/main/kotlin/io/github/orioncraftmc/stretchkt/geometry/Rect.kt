@@ -1,5 +1,7 @@
 package io.github.orioncraftmc.stretchkt.geometry
 
+import io.github.orioncraftmc.stretchkt.style.enums.FlexDirection
+
 
 data class Rect<T>(
     val start: T,
@@ -24,5 +26,37 @@ data class Rect<T>(
             top = transform(top, size.height),
             bottom = transform(bottom, size.height)
         )
+    }
+
+    internal fun mainStart(direction: FlexDirection): T {
+        return if (direction.isRow()) {
+            this.start
+        } else {
+            this.end
+        }
+    }
+
+    internal fun mainEnd(direction: FlexDirection): T {
+        return if (direction.isRow()) {
+            this.end
+        } else {
+            this.bottom
+        }
+    }
+
+    internal fun crossStart(direction: FlexDirection): T {
+        return if (direction.isRow()) {
+            this.top
+        } else {
+            this.start
+        }
+    }
+
+    internal fun crossEnd(direction: FlexDirection): T {
+        return if (direction.isRow()) {
+            this.bottom
+        } else {
+            this.end
+        }
     }
 }

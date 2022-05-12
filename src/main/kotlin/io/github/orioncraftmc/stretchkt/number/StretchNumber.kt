@@ -22,7 +22,6 @@ sealed class StretchNumber : OrElse<Float>, MathOpsTrait<StretchNumber> {
         return other
     }
 
-
     abstract fun asFloat(): Float
 
     class Defined internal constructor(val value: Float) : StretchNumber() {

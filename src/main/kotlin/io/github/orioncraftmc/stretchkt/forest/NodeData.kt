@@ -9,15 +9,21 @@ internal data class NodeData(
     val style: Style,
     val measure: MeasureFunc? = null,
     val layout: Layout = Layout(),
-    val mainSizeLayoutCache: Cache? = null,
-    val otherLayoutCache: Cache? = null,
-    val isDirty: Boolean = true
+    var mainSizeLayoutCache: Cache? = null,
+    var otherLayoutCache: Cache? = null,
+    var isDirty: Boolean = true,
+
+    val children: HashSet<NodeData> = HashSet(),
+    val parents: HashSet<NodeData> = HashSet()
+
 ) {
     fun newLeaf(style: Style, measure: MeasureFunc?): NodeData {
         return copy(
             style = style,
             measure = measure,
-            isDirty = true
+            isDirty = true,
+            children = HashSet(),
+            parents = HashSet()
         )
     }
 }
