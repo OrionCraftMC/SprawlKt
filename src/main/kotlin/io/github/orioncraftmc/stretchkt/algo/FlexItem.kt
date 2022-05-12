@@ -1,26 +1,26 @@
 package io.github.orioncraftmc.stretchkt.algo
 
-import com.sun.org.apache.xpath.internal.operations.Bool
 import io.github.orioncraftmc.stretchkt.geometry.Rect
 import io.github.orioncraftmc.stretchkt.geometry.Size
 import io.github.orioncraftmc.stretchkt.node.NodeId
+import io.github.orioncraftmc.stretchkt.number.StretchNumber
 
 internal data class FlexItem(
     val node: NodeId,
 
-    val size: Size<Number>,
-    val minSize: Size<Number>,
-    val maxSize: Size<Number>,
+    val size: Size<StretchNumber>,
+    val minSize: Size<StretchNumber>,
+    val maxSize: Size<StretchNumber>,
 
-    val position: Rect<Number>,
+    val position: Rect<StretchNumber>,
     val margin: Rect<Float>,
     val padding: Rect<Float>,
     val border: Rect<Float>,
 
-    val flexBasis: Float,
-    val innerFlexBasis: Float,
+    var flexBasis: Float,
+    var innerFlexBasis: Float,
     val violation: Float,
-    val frozen: Bool,
+    val frozen: Boolean,
 
     val hypotheticalInnerSize: Size<Float>,
     val hypotheticalOuterSize: Size<Float>,

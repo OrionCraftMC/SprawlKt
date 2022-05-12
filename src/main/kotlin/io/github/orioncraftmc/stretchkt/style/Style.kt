@@ -24,9 +24,9 @@ data class Style(
     val flexGrow: Float = 0f,
     val flexShrink: Float = 1.0f,
     val flexBasis: StretchDimension = StretchDimension.Auto,
-    val size: Size<StretchDimension> = Size.undefined(),
-    val minSize: Size<StretchDimension> = Size.undefined(),
-    val maxSize: Size<StretchDimension> = Size.undefined(),
+    val size: Size<StretchDimension> = Size.undefinedDimension(),
+    val minSize: Size<StretchDimension> = Size.undefinedDimension(),
+    val maxSize: Size<StretchDimension> = Size.undefinedDimension(),
     val aspectRatio: StretchNumber = StretchNumber.Undefined,
 ) {
 

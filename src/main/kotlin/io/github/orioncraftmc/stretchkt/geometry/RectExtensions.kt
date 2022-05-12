@@ -1,5 +1,6 @@
 package io.github.orioncraftmc.stretchkt.geometry
 
+import io.github.orioncraftmc.stretchkt.number.StretchNumber
 import io.github.orioncraftmc.stretchkt.style.enums.FlexDirection
 import io.github.orioncraftmc.stretchkt.style.enums.StretchDimension
 import io.github.orioncraftmc.stretchkt.traits.MathOpsTrait
@@ -33,3 +34,5 @@ fun <R, T : MathOpsTrait<R>> Rect<T>.cross(direction: FlexDirection): R {
         this.horizontal
     }
 }
+
+internal fun Rect<Float>.toStretchNumberRect() = map { StretchNumber.from(it) }

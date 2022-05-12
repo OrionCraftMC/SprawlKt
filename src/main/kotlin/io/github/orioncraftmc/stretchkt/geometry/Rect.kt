@@ -10,7 +10,7 @@ data class Rect<T>(
     val bottom: T /* Just like KingTux */
 ) {
 
-    fun map(transform: (T) -> T): Rect<T> {
+    internal fun <R> map(transform: (T) -> R): Rect<R> {
         return Rect(
             start = transform(start),
             end = transform(end),
@@ -19,7 +19,7 @@ data class Rect<T>(
         )
     }
 
-    fun <U, R> zipSize(size: Size<U>, transform: (T, U) -> R): Rect<R> {
+    internal fun <U, R> zipSize(size: Size<U>, transform: (T, U) -> R): Rect<R> {
         return Rect(
             start = transform(start, size.width),
             end = transform(end, size.width),

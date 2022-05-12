@@ -32,3 +32,11 @@ internal fun Forest.cache(node: NodeData, mainSize: Boolean): Cache? {
         node.otherLayoutCache
     }
 }
+
+internal fun Forest.setCache(node: NodeData, mainSize: Boolean, cache: Cache?) {
+    if (mainSize) {
+        node.mainSizeLayoutCache = cache
+    } else {
+        node.otherLayoutCache = cache
+    }
+}

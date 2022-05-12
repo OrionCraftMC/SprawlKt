@@ -4,8 +4,6 @@ import io.github.orioncraftmc.stretchkt.geometry.Size
 import io.github.orioncraftmc.stretchkt.node.MeasureFunc
 import io.github.orioncraftmc.stretchkt.number.StretchNumber
 import io.github.orioncraftmc.stretchkt.style.Style
-import io.github.orioncraftmc.stretchkt.style.enums.StretchDimension
-import jdk.javadoc.internal.doclets.toolkit.util.DocPath.parent
 
 /**
  * Forest - Backing datastructure for `Stretch` structs.
