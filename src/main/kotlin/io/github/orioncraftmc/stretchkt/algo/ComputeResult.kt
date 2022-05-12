@@ -4,3 +4,4 @@ import io.github.orioncraftmc.stretchkt.geometry.Size
 
 @JvmInline
 value class ComputeResult(val size: Size<Float>)
+

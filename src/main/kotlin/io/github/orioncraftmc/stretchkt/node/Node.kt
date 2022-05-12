@@ -1,9 +1,10 @@
 package io.github.orioncraftmc.stretchkt.node
 
 import io.github.orioncraftmc.stretchkt.forest.Forest
+import io.github.orioncraftmc.stretchkt.forest.NodeData
 import java.util.*
 
-typealias NodeId = UUID
+internal typealias NodeId = NodeData
 
 data class Node(
     val instance: UUID, val local: UUID

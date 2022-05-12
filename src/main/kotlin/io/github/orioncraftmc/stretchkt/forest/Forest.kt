@@ -1,7 +1,11 @@
 package io.github.orioncraftmc.stretchkt.forest
 
+import io.github.orioncraftmc.stretchkt.geometry.Size
 import io.github.orioncraftmc.stretchkt.node.MeasureFunc
+import io.github.orioncraftmc.stretchkt.number.StretchNumber
 import io.github.orioncraftmc.stretchkt.style.Style
+import io.github.orioncraftmc.stretchkt.style.enums.StretchDimension
+import jdk.javadoc.internal.doclets.toolkit.util.DocPath.parent
 
 /**
  * Forest - Backing datastructure for `Stretch` structs.
@@ -82,5 +86,14 @@ internal data class Forest(
         node.mainSizeLayoutCache = null
         node.otherLayoutCache = null
         node.isDirty = true
+
+        for (parent in node.parents) {
+            markDirty(parent)
+        }
     }
+
+    fun computeLayout(node: NodeData, size: Size<StretchNumber>) {
+        //TODO: this.compute(node, size)
+    }
+
 }
