@@ -19,7 +19,7 @@ internal data class FlexItem(
 
     var flexBasis: Float,
     var innerFlexBasis: Float,
-    val violation: Float,
+    var violation: Float,
     var frozen: Boolean,
 
     val hypotheticalInnerSize: Size<Float>,
