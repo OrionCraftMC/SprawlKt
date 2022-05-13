@@ -18,7 +18,7 @@ internal class Forest {
         return Forest()
     }
 
-    internal fun newLeaf(style: Style, measure: MeasureFunc): NodeData {
+    internal fun newLeaf(style: Style, measure: MeasureFunc?): NodeData {
         return NodeData(style, measure)
     }
 

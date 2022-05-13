@@ -7,14 +7,22 @@ import io.github.orioncraftmc.stretchkt.geometry.toStretchNumberSize
 import io.github.orioncraftmc.stretchkt.number.StretchNumber
 import io.github.orioncraftmc.stretchkt.style.Style
 
-internal object Stretch {
-    internal val forest: Forest = Forest()
+object Stretch {
+    private val forest: Forest = Forest()
 
-    fun newLeaf(style: Style, measure: MeasureFunc): NodeData {
+    fun newNode(style: Style, children: List<Node> = emptyList()): Node {
+        return Node(style, children)
+    }
+
+    fun newLeaf(style: Style, measure: MeasureFunc? = null): Node {
+        return Node(style, measure)
+    }
+
+    internal fun newLeafInternal(style: Style, measure: MeasureFunc? = null): NodeData {
         return forest.newLeaf(style, measure)
     }
 
-    fun newNode(style: Style, children: List<Node>): NodeData {
+    internal fun newNodeInternal(style: Style, children: List<Node> = emptyList()): NodeData {
         return forest.newNode(style, children.map { it.internalNodeData })
     }
 
