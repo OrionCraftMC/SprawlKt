@@ -19,4 +19,8 @@ internal data class NodeData(
 
     internal var exposedNode: Node? = null // The node that is exposed to library users
 
-)
+) {
+    override fun toString(): String {
+        return "NodeData(style=$style, measure=$measure, layout=$layout, mainSizeLayoutCache=$mainSizeLayoutCache, otherLayoutCache=$otherLayoutCache, isDirty=$isDirty)"
+    }
+}
