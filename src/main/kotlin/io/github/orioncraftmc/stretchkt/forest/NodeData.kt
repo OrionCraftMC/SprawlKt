@@ -7,16 +7,16 @@ import io.github.orioncraftmc.stretchkt.result.Cache
 import io.github.orioncraftmc.stretchkt.style.Style
 
 internal data class NodeData(
-    var style: Style,
-    var measure: MeasureFunc? = null,
-    var layout: Layout = Layout(),
-    var mainSizeLayoutCache: Cache? = null,
-    var otherLayoutCache: Cache? = null,
-    var isDirty: Boolean = true,
+    internal var style: Style,
+    internal var measure: MeasureFunc? = null,
+    internal var layout: Layout = Layout(),
+    internal var mainSizeLayoutCache: Cache? = null,
+    internal var otherLayoutCache: Cache? = null,
+    internal var isDirty: Boolean = true,
 
-    val children: MutableList<NodeData> = mutableListOf(),
-    val parents: MutableList<NodeData> = mutableListOf(),
+    internal val children: MutableList<NodeData> = mutableListOf(),
+    internal val parents: MutableList<NodeData> = mutableListOf(),
 
-    var exposedNode: Node? = null // The node that is exposed to library users
+    internal var exposedNode: Node? = null // The node that is exposed to library users
 
 )

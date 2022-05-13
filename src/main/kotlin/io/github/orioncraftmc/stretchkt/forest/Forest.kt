@@ -13,16 +13,16 @@ import io.github.orioncraftmc.stretchkt.style.Style
  */
 internal class Forest {
 
-    fun withCapacity(capacity: Int): Forest {
+    internal fun withCapacity(capacity: Int): Forest {
         // TODO: Check if capacity is needed
         return Forest()
     }
 
-    fun newLeaf(style: Style, measure: MeasureFunc): NodeData {
+    internal fun newLeaf(style: Style, measure: MeasureFunc): NodeData {
         return NodeData(style, measure)
     }
 
-    fun newNode(style: Style, children: Collection<NodeData>): NodeData {
+    internal fun newNode(style: Style, children: Collection<NodeData>): NodeData {
         return NodeData(style).also { newNode ->
             // Then, add the children to the node
             newNode.children.addAll(children)
@@ -35,20 +35,20 @@ internal class Forest {
     }
 
 
-    fun addChild(node: NodeData, child: NodeData) {
+    internal fun addChild(node: NodeData, child: NodeData) {
         node.children.add(child)
         child.parents.add(node)
         markDirty(node)
     }
 
-    fun clear() {
+    internal fun clear() {
         // PORT NOTE: The implementation of this method differs from the original implementation.
         throw Exception("Port's implementation of the Forest doesn't keep a list of nodes, so this method is not needed")
     }
 
 
     /// Removes a node and swaps with the last node.
-    fun swapRemove(node: NodeData): NodeData? {
+    internal fun swapRemove(node: NodeData): NodeData? {
 
         // Remove old node as parent from all its chilren.
         node.children.forEach { child ->
@@ -63,16 +63,16 @@ internal class Forest {
         return null
     }
 
-    fun removeChild(node: NodeData, child: NodeData) {
+    internal fun removeChild(node: NodeData, child: NodeData) {
         node.children.remove(child)
         child.parents.remove(node)
     }
 
-    fun removeChildAtIndex(node: NodeData, index: Int): NodeData {
+    internal fun removeChildAtIndex(node: NodeData, index: Int): NodeData {
         return node.children.removeAt(index)
     }
 
-    fun markDirty(node: NodeData) {
+    internal fun markDirty(node: NodeData) {
         node.mainSizeLayoutCache = null
         node.otherLayoutCache = null
         node.isDirty = true
@@ -82,7 +82,7 @@ internal class Forest {
         }
     }
 
-    fun computeLayout(node: NodeData, size: Size<StretchNumber>) {
+    internal fun computeLayout(node: NodeData, size: Size<StretchNumber>) {
         this.compute(node, size)
     }
 

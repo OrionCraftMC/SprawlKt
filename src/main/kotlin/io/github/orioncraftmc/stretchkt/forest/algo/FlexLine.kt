@@ -1,7 +1,7 @@
 package io.github.orioncraftmc.stretchkt.forest.algo
 
 internal data class FlexLine(
-    val items: List<FlexItem>,
-    var crossSize: Float,
-    var offsetCross: Float,
+    internal val items: List<FlexItem>,
+    internal var crossSize: Float,
+    internal var offsetCross: Float,
 )

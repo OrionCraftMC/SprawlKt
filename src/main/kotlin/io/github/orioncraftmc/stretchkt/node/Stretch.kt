@@ -23,7 +23,6 @@ internal object Stretch {
         forest.markDirty(node.internalNodeData)
     }
 
-
     fun setChildren(node: Node, children: List<Node>) {
         // Remove node as parent from all its current children.
         for (oldChild in node.internalNodeData.children) {
@@ -98,7 +97,6 @@ internal object Stretch {
     fun style(node: Node): Style {
         return node.internalNodeData.style
     }
-
 
     /**
      * Return this node layout relative to its parent

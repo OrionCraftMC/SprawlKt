@@ -15,7 +15,7 @@ data class Size<T>(var width: T, var height: T) {
 
         fun zero() = Size(0f, 0f)
 
-        fun zeroStretchNumber() = Size(StretchNumber.zero, StretchNumber.zero)
+        fun zeroNumber() = Size(StretchNumber.zero, StretchNumber.zero)
     }
 
     fun <R> map(transform: (T) -> R): Size<R> {

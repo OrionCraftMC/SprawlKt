@@ -8,8 +8,8 @@ import io.github.orioncraftmc.stretchkt.geometry.Point
 import io.github.orioncraftmc.stretchkt.geometry.Size
 import io.github.orioncraftmc.stretchkt.geometry.resolve
 import io.github.orioncraftmc.stretchkt.geometry.toStretchNumberSize
-import io.github.orioncraftmc.stretchkt.number.StretchNumber
 import io.github.orioncraftmc.stretchkt.node.Layout
+import io.github.orioncraftmc.stretchkt.number.StretchNumber
 
 
 internal fun Forest.compute(root: NodeData, size: Size<StretchNumber>) {
