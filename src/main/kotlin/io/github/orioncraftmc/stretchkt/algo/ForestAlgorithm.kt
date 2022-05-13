@@ -1261,7 +1261,7 @@ internal fun Forest.computeInternal(
 
 
     fun hiddenLayout(node: NodeId, order: UInt) {
-        node.layout = Layout ( order, size = Size.zero(), location = Point.zero() )
+        node.layout = Layout(order, size = Size.zero(), location = Point.zero())
 
         for ((childOrder, child) in node.children.withIndex()) {
             hiddenLayout(child, childOrder.toUInt())
