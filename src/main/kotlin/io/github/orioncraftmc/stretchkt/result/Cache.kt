@@ -1,6 +1,6 @@
 package io.github.orioncraftmc.stretchkt.result
 
-import io.github.orioncraftmc.stretchkt.algo.ComputeResult
+import io.github.orioncraftmc.stretchkt.forest.algo.ComputeResult
 import io.github.orioncraftmc.stretchkt.geometry.Size
 import io.github.orioncraftmc.stretchkt.number.StretchNumber
 
