@@ -3,16 +3,16 @@ package io.github.orioncraftmc.stretchkt.forest.algo
 import io.github.orioncraftmc.stretchkt.extensions.maybeMax
 import io.github.orioncraftmc.stretchkt.extensions.maybeMin
 import io.github.orioncraftmc.stretchkt.forest.Forest
+import io.github.orioncraftmc.stretchkt.forest.NodeData
 import io.github.orioncraftmc.stretchkt.geometry.Point
 import io.github.orioncraftmc.stretchkt.geometry.Size
 import io.github.orioncraftmc.stretchkt.geometry.resolve
 import io.github.orioncraftmc.stretchkt.geometry.toStretchNumberSize
-import io.github.orioncraftmc.stretchkt.node.NodeId
 import io.github.orioncraftmc.stretchkt.number.StretchNumber
-import io.github.orioncraftmc.stretchkt.result.Layout
+import io.github.orioncraftmc.stretchkt.node.Layout
 
 
-internal fun Forest.compute(root: NodeId, size: Size<StretchNumber>) {
+internal fun Forest.compute(root: NodeData, size: Size<StretchNumber>) {
     val style = root.style
     val hasRootMinMax =
         style.minSize.width.isDefined || style.minSize.height.isDefined || style.maxSize.width.isDefined || style.maxSize.height.isDefined

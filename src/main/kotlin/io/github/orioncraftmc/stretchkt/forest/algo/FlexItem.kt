@@ -1,12 +1,12 @@
 package io.github.orioncraftmc.stretchkt.forest.algo
 
+import io.github.orioncraftmc.stretchkt.forest.NodeData
 import io.github.orioncraftmc.stretchkt.geometry.Rect
 import io.github.orioncraftmc.stretchkt.geometry.Size
-import io.github.orioncraftmc.stretchkt.node.NodeId
 import io.github.orioncraftmc.stretchkt.number.StretchNumber
 
 internal data class FlexItem(
-    val node: NodeId,
+    val node: NodeData,
 
     val size: Size<StretchNumber>,
     val minSize: Size<StretchNumber>,
