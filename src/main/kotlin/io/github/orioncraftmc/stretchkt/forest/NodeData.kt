@@ -8,7 +8,7 @@ import io.github.orioncraftmc.stretchkt.style.Style
 internal data class NodeData(
     val style: Style,
     val measure: MeasureFunc? = null,
-    val layout: Layout = Layout(),
+    var layout: Layout = Layout(),
     var mainSizeLayoutCache: Cache? = null,
     var otherLayoutCache: Cache? = null,
     var isDirty: Boolean = true,

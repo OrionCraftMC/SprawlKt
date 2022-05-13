@@ -4,6 +4,7 @@ import io.github.orioncraftmc.stretchkt.extensions.*
 import io.github.orioncraftmc.stretchkt.forest.Forest
 import io.github.orioncraftmc.stretchkt.forest.NodeData
 import io.github.orioncraftmc.stretchkt.geometry.*
+import io.github.orioncraftmc.stretchkt.node.NodeId
 import io.github.orioncraftmc.stretchkt.number.StretchNumber
 import io.github.orioncraftmc.stretchkt.result.Cache
 import io.github.orioncraftmc.stretchkt.result.Layout
@@ -482,8 +483,8 @@ internal fun Forest.computeInternal(
                     }
                 } else if (shrinking && sumFlexShrink > 0.0f) {
                     var sumScaledShrinkFactor: Float = unfrozen
-                        .map {child -> child.innerFlexBasis * child.node.style.flexShrink}
-                    .sum();
+                        .map { child -> child.innerFlexBasis * child.node.style.flexShrink }
+                        .sum();
 
                     if (sumScaledShrinkFactor > 0.0f) {
                         for (child in unfrozen) {
@@ -504,7 +505,7 @@ internal fun Forest.computeInternal(
             //    item’s target main size was made smaller by this, it’s a max violation.
             //    If the item’s target main size was made larger by this, it’s a min violation.
 
-            var totalViolation = unfrozen.fold(0.0f) {acc, child ->
+            var totalViolation = unfrozen.fold(0.0f) { acc, child ->
                 // TODO - not really spec abiding but needs to be done somewhere. probably somewhere else though.
                 // The following logic was developed not from the spec but by trial and error looking into how
                 // webkit handled various scenarios. Can probably be solved better by passing in
@@ -593,13 +594,29 @@ internal fun Forest.computeInternal(
                 dir,
                 computeInternal(
                     node = child.node,
-                    nodeSize = Size (
-                        width = if (isRow) { targetSize.width } else { childCross },
-                        height = if (isRow) { childCross } else { targetSize.height },
+                    nodeSize = Size(
+                        width = if (isRow) {
+                            targetSize.width
+                        } else {
+                            childCross
+                        },
+                        height = if (isRow) {
+                            childCross
+                        } else {
+                            targetSize.height
+                        },
                     ),
                     parentSize = Size(
-                        width = if (isRow) { containerSize.main(dir) } else { availableSpace.width },
-                        height = if (isRow) { availableSpace.height } else { containerSize.main(dir) },
+                        width = if (isRow) {
+                            containerSize.main(dir)
+                        } else {
+                            availableSpace.width
+                        },
+                        height = if (isRow) {
+                            availableSpace.height
+                        } else {
+                            containerSize.main(dir)
+                        },
                     ).toStretchNumberSize(),
                     performLayout = false, mainSize = false,
                 )
@@ -632,7 +649,7 @@ internal fun Forest.computeInternal(
             for (child in line.items) {
                 var result = computeInternal(
                     node = child.node,
-                    nodeSize = Size (
+                    nodeSize = Size(
                         width = if (isRow) {
                             child.targetSize.width
                         } else {
@@ -644,9 +661,17 @@ internal fun Forest.computeInternal(
                             child.targetSize.height
                         },
                     ).toStretchNumberSize(),
-                    parentSize = Size (
-                        width = if (isRow) { StretchNumber.from(containerSize.width) } else { nodeSize.width },
-                        height = if (isRow) { nodeSize.height } else { StretchNumber.from(containerSize.height) },
+                    parentSize = Size(
+                        width = if (isRow) {
+                            StretchNumber.from(containerSize.width)
+                        } else {
+                            nodeSize.width
+                        },
+                        height = if (isRow) {
+                            nodeSize.height
+                        } else {
+                            StretchNumber.from(containerSize.height)
+                        },
                     ),
                     performLayout = true,
                     mainSize = false,
@@ -654,10 +679,10 @@ internal fun Forest.computeInternal(
 
                 child.baseline = calcBaseline(
                     child.node,
-                    Layout (
-                    order = node.children.indexOf(child.node).toUInt(),
-                    size = result.size,
-                    location = Point.zero(),
+                    Layout(
+                        order = node.children.indexOf(child.node).toUInt(),
+                        size = result.size,
+                        location = Point.zero(),
                     ),
                 );
             }
@@ -688,7 +713,8 @@ internal fun Forest.computeInternal(
             //    3. The used cross-size of the flex line is the largest of the numbers found in the
             //       previous two steps and zero.
 
-            var maxBaseline: Float = line.items.map { child -> child.baseline }.fold(0.0f) { acc, x -> acc.maybeMax(x) };
+            var maxBaseline: Float =
+                line.items.map { child -> child.baseline }.fold(0.0f) { acc, x -> acc.maybeMax(x) };
             line.crossSize = line
                 .items
                 .map { child ->
@@ -706,7 +732,6 @@ internal fun Forest.computeInternal(
                 .fold(0.0f) { acc, x -> acc.maybeMax(x) };
         }
     }
-
 
 
     // 9. Handle 'align-content: stretch'. If the flex container has a definite cross size,
@@ -764,14 +789,14 @@ internal fun Forest.computeInternal(
                 if (childStyle.alignSelf(node.style) == AlignSelf.Stretch
                     && childStyle.crossMarginStart(dir) != StretchDimension.Auto
                     && childStyle.crossMarginEnd(dir) != StretchDimension.Auto
-                    && childStyle.crossSize(dir) == StretchDimension.Auto)
-            {
-                (lineCrossSize - child.margin.cross(dir))
-                    .maybeMax(child.minSize.cross(dir))
-                    .maybeMin(child.maxSize.cross(dir))
-            } else {
-            child.hypotheticalInnerSize.cross(dir)
-        },
+                    && childStyle.crossSize(dir) == StretchDimension.Auto
+                ) {
+                    (lineCrossSize - child.margin.cross(dir))
+                        .maybeMax(child.minSize.cross(dir))
+                        .maybeMin(child.maxSize.cross(dir))
+                } else {
+                    child.hypotheticalInnerSize.cross(dir)
+                },
             );
 
             child.outerTargetSize.setCross(dir, child.targetSize.cross(dir) + child.margin.cross(dir));
@@ -825,7 +850,7 @@ internal fun Forest.computeInternal(
             var numItems = line.items.size;
             var layoutReverse = dir.isReverse();
 
-            var justifyItem: (IndexedValue<FlexItem>) -> Unit = { (i, child) ->
+            var justifyItem: (Int, FlexItem) -> Unit = { i, child ->
                 var isFirst = i == 0;
 
                 child.offsetMain = when (node.style.justifyContent) {
@@ -869,13 +894,12 @@ internal fun Forest.computeInternal(
             };
 
             if (layoutReverse) {
-                line.items.asReversed().withIndex().forEach(justifyItem);
+                line.items.asReversed().forEachIndexed(justifyItem);
             } else {
-                line.items.withIndex().forEach(justifyItem);
+                line.items.forEachIndexed(justifyItem);
             }
         }
     }
-/*
 
     // 9.6. Cross-Axis Alignment
 
@@ -887,33 +911,31 @@ internal fun Forest.computeInternal(
     //       is auto, set it to zero. Set the opposite margin so that the outer cross size of the
     //       item equals the cross size of its flex line.
 
-
-    for line in &mut flexLines {
+    for (line in flexLines) {
         var lineCrossSize = line.crossSize;
-        var maxBaseline: Float = line.items.map(|child| child.baseline).fold(0.0f, |acc, x| acc.max(x));
-
+        var maxBaseline: Float = line.items.map { child -> child.baseline }.fold(0.0f) { acc, x -> acc.maybeMax(x) };
         for (child in line.items) {
             var freeSpace = lineCrossSize - child.outerTargetSize.cross(dir);
             var childStyle = child.node.style;
 
-            if childStyle.crossMarginStart(dir) == StretchDimension.Auto
+            if (childStyle.crossMarginStart(dir) == StretchDimension.Auto
                 && childStyle.crossMarginEnd(dir) == StretchDimension.Auto
-            {
-                if isRow {
-                    child.margin.top = freeSpace / 2.0;
-                    child.margin.bottom = freeSpace / 2.0;
+            ) {
+                if (isRow) {
+                    child.margin.top = freeSpace / 2.0f;
+                    child.margin.bottom = freeSpace / 2.0f;
                 } else {
-                    child.margin.start = freeSpace / 2.0;
-                    child.margin.end = freeSpace / 2.0;
+                    child.margin.start = freeSpace / 2.0f;
+                    child.margin.end = freeSpace / 2.0f;
                 }
-            } else if childStyle.crossMarginStart(dir) == StretchDimension.Auto {
-                if isRow {
+            } else if (childStyle.crossMarginStart(dir) == StretchDimension.Auto) {
+                if (isRow) {
                     child.margin.top = freeSpace;
                 } else {
                     child.margin.start = freeSpace;
                 }
-            } else if childStyle.crossMarginEnd(dir) == StretchDimension.Auto {
-                if isRow {
+            } else if (childStyle.crossMarginEnd(dir) == StretchDimension.Auto) {
+                if (isRow) {
                     child.margin.bottom = freeSpace;
                 } else {
                     child.margin.end = freeSpace;
@@ -922,38 +944,38 @@ internal fun Forest.computeInternal(
                 // 14. Align all flex items along the cross-axis per align-self, if neither of the item’s
                 //     cross-axis margins are auto.
 
-                child.offsetCross = match childStyle.alignSelf(&self.nodes[node].style) {
-                    AlignSelf::Auto -> 0.0f, // Should never happen
-                    AlignSelf::FlexStart -> {
-                        if isWrapReverse {
+                child.offsetCross = when (childStyle.alignSelf(node.style)) {
+                    AlignSelf.Auto -> 0.0f // Should never happen
+                    AlignSelf.FlexStart -> {
+                        if (isWrapReverse) {
                             freeSpace
                         } else {
                             0.0f
                         }
                     }
-                    AlignSelf::FlexEnd -> {
-                        if isWrapReverse {
+                    AlignSelf.FlexEnd -> {
+                        if (isWrapReverse) {
                             0.0f
                         } else {
                             freeSpace
                         }
                     }
-                    AlignSelf::Center -> freeSpace / 2.0,
-                    AlignSelf::Baseline -> {
-                        if isRow {
+                    AlignSelf.Center -> freeSpace / 2.0f
+                    AlignSelf.Baseline -> {
+                        if (isRow) {
                             maxBaseline - child.baseline
                         } else {
                             // baseline alignment only makes sense if the direction is row
                             // we treat it as flex-start alignment in columns.
-                            if isWrapReverse {
+                            if (isWrapReverse) {
                                 freeSpace
                             } else {
                                 0.0f
                             }
                         }
                     }
-                    AlignSelf::Stretch -> {
-                        if isWrapReverse {
+                    AlignSelf.Stretch -> {
+                        if (isWrapReverse) {
                             freeSpace
                         } else {
                             0.0f
@@ -964,22 +986,23 @@ internal fun Forest.computeInternal(
         }
     }
 
+
     // 15. Determine the flex container’s used cross size:
     //     - If the cross size property is a definite size, use that, clamped by the used
     //       min and max cross sizes of the flex container.
     //     - Otherwise, use the sum of the flex lines' cross sizes, clamped by the used
     //       min and max cross sizes of the flex container.
 
-    var totalCrossSize: Float = flexLines.iter().map(|line| line.crossSize).sum();
+    var totalCrossSize: Float = flexLines.map { line -> line.crossSize }.sum();
     containerSize.setCross(dir, nodeSize.cross(dir).orElse(totalCrossSize + paddingBorder.cross(dir)));
     innerContainerSize.setCross(dir, containerSize.cross(dir) - paddingBorder.cross(dir));
 
+
     // We have the container size. If our caller does not care about performing
     // layout we are done now.
-    if !performLayout {
-        var result = ComputeResult { size: containerSize };
-        *self.cache(node, mainSize) =
-            Some(result::Cache { nodeSize, parentSize, performLayout, result: result.clone() });
+    if (!performLayout) {
+        var result = ComputeResult(size = containerSize);
+        setCache(node, mainSize, Cache(nodeSize, parentSize, performLayout, result = result.clone()));
         return result;
     }
 
@@ -988,97 +1011,94 @@ internal fun Forest.computeInternal(
     var freeSpace = innerContainerSize.cross(dir) - totalCrossSize;
     var numLines = flexLines.size;
 
-    var alignLine = |(i, line): (usize, &mut FlexLine)| {
+    var alignLine: (Int, FlexLine) -> Unit = { i, line ->
         var isFirst = i == 0;
 
-        line.offsetCross = match self.nodes[node].style.alignContent {
+        line.offsetCross = when (node.style.alignContent) {
             AlignContent.FlexStart -> {
-                if isFirst && isWrapReverse {
+                if (isFirst && isWrapReverse) {
                     freeSpace
                 } else {
                     0.0f
                 }
             }
             AlignContent.FlexEnd -> {
-                if isFirst && !isWrapReverse {
+                if (isFirst && !isWrapReverse) {
                     freeSpace
                 } else {
                     0.0f
                 }
             }
             AlignContent.Center -> {
-                if isFirst {
-                    freeSpace / 2.0
+                if (isFirst) {
+                    freeSpace / 2.0f
                 } else {
                     0.0f
                 }
             }
-            AlignContent.Stretch -> 0.0f,
+            AlignContent.Stretch -> 0.0f
             AlignContent.SpaceBetween -> {
-                if isFirst {
+                if (isFirst) {
                     0.0f
                 } else {
-                    freeSpace / (numLines - 1) as Float
+                    freeSpace / (numLines - 1).toFloat()
                 }
             }
             AlignContent.SpaceAround -> {
-                if isFirst {
-                    (freeSpace / numLines as Float) / 2.0
+                if (isFirst) {
+                    (freeSpace / numLines.toFloat()) / 2.0f
                 } else {
-                    freeSpace / numLines as Float
+                    freeSpace / numLines.toFloat()
                 }
             }
         };
     };
 
-    if isWrapReverse {
-        flexLines.rev().enumerate().forEach(alignLine);
+    if (isWrapReverse) {
+        flexLines.asReversed().forEachIndexed(alignLine);
     } else {
-        flexLines.enumerate().forEach(alignLine);
+        flexLines.forEachIndexed(alignLine);
     }
 
     // Do a final layout pass and gather the resulting layouts
-    {
-        var mut totalOffsetCross = paddingBorder.crossStart(dir);
+    run {
+        var totalOffsetCross = paddingBorder.crossStart(dir);
 
-        var layoutLine = |line: &mut FlexLine| {
-            var mut totalOffsetMain = paddingBorder.mainStart(dir);
+        var layoutLine: (FlexLine) -> Unit = { line ->
+            var totalOffsetMain = paddingBorder.mainStart(dir);
             var lineOffsetCross = line.offsetCross;
 
-            var layoutItem = |child: &mut FlexItem| {
-                var result = self.computeInternal(
-                    child.node,
-                    child.targetSize.map(|s| s),
-                    containerSize.map(|s| s),
-                    true,
-                    false,
+            var layoutItem: (FlexItem) -> Unit = { child ->
+                var result = computeInternal(
+                    node = child.node,
+                    nodeSize = child.targetSize.toStretchNumberSize(),
+                    parentSize = containerSize.toStretchNumberSize(),
+                    performLayout = true,
+                    mainSize = false,
                 );
 
-                var offsetMain = totalOffsetMain
-                    + child.offsetMain
-                    + child.margin.mainStart(dir)
-                    + (child.position.mainStart(dir).orElse(0.0f) - child.position.mainEnd(dir).orElse(0.0f));
+                var offsetMain =
+                    totalOffsetMain + child.offsetMain + child.margin.mainStart(dir) + (child.position.mainStart(dir)
+                        .orElse(0.0f) - child.position.mainEnd(dir).orElse(0.0f));
 
-                var offsetCross = totalOffsetCross
-                    + child.offsetCross
-                    + lineOffsetCross
-                    + child.margin.crossStart(dir)
-                    + (child.position.crossStart(dir).orElse(0.0f) - child.position.crossEnd(dir).orElse(0.0f));
+                var offsetCross =
+                    totalOffsetCross + child.offsetCross + lineOffsetCross + child.margin.crossStart(dir) +
+                            (child.position.crossStart(dir).orElse(0.0f) - child.position.crossEnd(dir).orElse(0.0f));
 
-                child.node.layout = result::Layout {
-                    order: self.children[node].iter().position(|n| *n == child.node).unwrap() as u32,
-                    size: result.size,
-                    location: Point {
-                        x: if isRow { offsetMain } else { offsetCross },
-                        y: if isColumn { offsetMain } else { offsetCross },
-                    },
-                };
+                child.node.layout = Layout(
+                    order = node.children.indexOf(child.node).toUInt(),
+                    size = result.size,
+                    location = Point(
+                        x = if (isRow) offsetMain else offsetCross,
+                        y = if (isColumn) offsetMain else offsetCross,
+                    ),
+                );
 
                 totalOffsetMain += child.offsetMain + child.margin.main(dir) + result.size.main(dir);
             };
 
-            if dir.isReverse() {
-                line.items.rev().forEach(layoutItem);
+            if (dir.isReverse()) {
+                line.items.asReversed().forEach(layoutItem);
             } else {
                 line.items.forEach(layoutItem);
             }
@@ -1086,40 +1106,44 @@ internal fun Forest.computeInternal(
             totalOffsetCross += lineOffsetCross + line.crossSize;
         };
 
-        if isWrapReverse {
-            flexLines.rev().forEach(layoutLine);
+        if (isWrapReverse) {
+            flexLines.asReversed().forEach(layoutLine);
         } else {
             flexLines.forEach(layoutLine);
         }
     }
 
-    // Before returning we perform absolute layout on all absolutely positioned children
-    {
-        // TODO: remove number of Vec<> generated
-        var candidates = self.children[node]
-            .iter()
-            .cloned()
-            .enumerate()
-            .filter(|(, child)| self.nodes[*child].style.positionType == PositionType::Absolute)
-            .collect::<sys::Vec<>>();
 
-        for (order, child) in candidates {
+    // Before returning we perform absolute layout on all absolutely positioned children
+    run {
+        var candidates = node.children
+            .filter { child -> child.style.positionType == PositionType.Absolute }
+            .toList()
+
+        for ((order, child) in candidates.withIndex()) {
             var containerWidth = containerSize.width;
             var containerHeight = containerSize.height;
 
-            var childStyle = self.nodes[child].style;
+            var childStyle = child.style;
 
-            var start = childStyle.position.start.resolve(containerWidth)
-                + childStyle.margin.start.resolve(containerWidth);
+            var start =
+                childStyle.position.start.resolve(containerWidth) + childStyle.margin.start.resolve(containerWidth);
             var end =
                 childStyle.position.end.resolve(containerWidth) + childStyle.margin.end.resolve(containerWidth);
-            var top = childStyle.position.top.resolve(containerHeight)
-                + childStyle.margin.top.resolve(containerHeight);
-            var bottom = childStyle.position.bottom.resolve(containerHeight)
-                + childStyle.margin.bottom.resolve(containerHeight);
+            var top = childStyle.position.top.resolve(containerHeight) + childStyle.margin.top.resolve(containerHeight);
+            var bottom =
+                childStyle.position.bottom.resolve(containerHeight) + childStyle.margin.bottom.resolve(containerHeight);
 
-            var (startMain, endMain) = if isRow { (start, end) } else { (top, bottom) };
-            var (startCross, endCross) = if isRow { (top, bottom) } else { (start, end) };
+            var (startMain, endMain) = if (isRow) {
+                (start to end)
+            } else {
+                (top to bottom)
+            };
+            var (startCross, endCross) = if (isRow) {
+                (top to bottom)
+            } else {
+                (start to end)
+            };
 
             var width = childStyle
                 .size
@@ -1127,11 +1151,13 @@ internal fun Forest.computeInternal(
                 .resolve(containerWidth)
                 .maybeMax(childStyle.minSize.width.resolve(containerWidth))
                 .maybeMin(childStyle.maxSize.width.resolve(containerWidth))
-                .orElse(if start.isDefined() && end.isDefined() {
-                    containerWidth - start - end
-                } else {
-                    Undefined
-                });
+                .orElse(
+                    if (start.isDefined && end.isDefined) {
+                        containerWidth - start - end
+                    } else {
+                        StretchNumber.Undefined
+                    }
+                );
 
             var height = childStyle
                 .size
@@ -1139,73 +1165,73 @@ internal fun Forest.computeInternal(
                 .resolve(containerHeight)
                 .maybeMax(childStyle.minSize.height.resolve(containerHeight))
                 .maybeMin(childStyle.maxSize.height.resolve(containerHeight))
-                .orElse(if top.isDefined() && bottom.isDefined() {
-                    containerHeight - top - bottom
-                } else {
-                    Undefined
-                });
+                .orElse(
+                    if (top.isDefined && bottom.isDefined) {
+                        containerHeight - top - bottom
+                    } else {
+                        StretchNumber.Undefined
+                    }
+                );
 
-            var result = self.computeInternal(
+            var result = computeInternal(
                 child,
-                Size { width, height },
-                Size { width = containerWidth, height = containerHeight },
+                Size(width, height),
+                Size(width = containerWidth, height = containerHeight).toStretchNumberSize(),
                 true,
                 false,
             );
 
-            var freeMainSpace = containerSize.main(dir)
-                - result
-                    .size
-                    .main(dir)
-                    .maybeMax(childStyle.minMainSize(dir).resolve(nodeInnerSize.main(dir)))
-                    .maybeMin(childStyle.maxMainSize(dir).resolve(nodeInnerSize.main(dir)));
+            var freeMainSpace = containerSize.main(dir) - result
+                .size
+                .main(dir)
+                .maybeMax(childStyle.minMainSize(dir).resolve(nodeInnerSize.main(dir)))
+                .maybeMin(childStyle.maxMainSize(dir).resolve(nodeInnerSize.main(dir)));
 
-            var freeCrossSpace = containerSize.cross(dir)
-                - result
-                    .size
-                    .cross(dir)
-                    .maybeMax(childStyle.minCrossSize(dir).resolve(nodeInnerSize.cross(dir)))
-                    .maybeMin(childStyle.maxCrossSize(dir).resolve(nodeInnerSize.cross(dir)));
+            var freeCrossSpace = containerSize.cross(dir) - result
+                .size
+                .cross(dir)
+                .maybeMax(childStyle.minCrossSize(dir).resolve(nodeInnerSize.cross(dir)))
+                .maybeMin(childStyle.maxCrossSize(dir).resolve(nodeInnerSize.cross(dir)));
 
-            var offsetMain = if startMain.isDefined() {
+            var offsetMain = if (startMain.isDefined) {
                 startMain.orElse(0.0f) + border.mainStart(dir)
-            } else if endMain.isDefined() {
+            } else if (endMain.isDefined) {
                 freeMainSpace - endMain.orElse(0.0f) - border.mainEnd(dir)
             } else {
-                match self.nodes[node].style.justifyContent {
-                    JustifyContent.SpaceBetween | JustifyContent.FlexStart -> paddingBorder.mainStart(dir),
-                    JustifyContent.FlexEnd -> freeMainSpace - paddingBorder.mainEnd(dir),
-                    JustifyContent.SpaceEvenly | JustifyContent.SpaceAround | JustifyContent.Center -> {
-                        freeMainSpace / 2.0
+                when (node.style.justifyContent) {
+                    JustifyContent.SpaceBetween, JustifyContent.FlexStart -> paddingBorder.mainStart(dir)
+                    JustifyContent.FlexEnd -> freeMainSpace - paddingBorder.mainEnd(dir)
+                    JustifyContent.SpaceEvenly, JustifyContent.SpaceAround, JustifyContent.Center -> {
+                        freeMainSpace / 2.0f
                     }
                 }
             };
 
-            var offsetCross = if startCross.isDefined() {
+            var offsetCross = if (startCross.isDefined) {
                 startCross.orElse(0.0f) + border.crossStart(dir)
-            } else if endCross.isDefined() {
+            } else if (endCross.isDefined) {
                 freeCrossSpace - endCross.orElse(0.0f) - border.crossEnd(dir)
             } else {
-                match childStyle.alignSelf(&self.nodes[node].style) {
-                    AlignSelf::Auto -> 0.0f, // Should never happen
-                    AlignSelf::FlexStart -> {
-                        if isWrapReverse {
+                when (childStyle.alignSelf(node.style)) {
+                    AlignSelf.Auto -> 0.0f // Should never happen
+                    AlignSelf.FlexStart -> {
+                        if (isWrapReverse) {
                             freeCrossSpace - paddingBorder.crossEnd(dir)
                         } else {
                             paddingBorder.crossStart(dir)
                         }
                     }
-                    AlignSelf::FlexEnd -> {
-                        if isWrapReverse {
+                    AlignSelf.FlexEnd -> {
+                        if (isWrapReverse) {
                             paddingBorder.crossStart(dir)
                         } else {
                             freeCrossSpace - paddingBorder.crossEnd(dir)
                         }
                     }
-                    AlignSelf::Center -> freeCrossSpace / 2.0,
-                    AlignSelf::Baseline -> freeCrossSpace / 2.0, // Treat as center for now until we have baseline support
-                    AlignSelf::Stretch -> {
-                        if isWrapReverse {
+                    AlignSelf.Center -> freeCrossSpace / 2.0f
+                    AlignSelf.Baseline -> freeCrossSpace / 2.0f // Treat as center for now until we have baseline support
+                    AlignSelf.Stretch -> {
+                        if (isWrapReverse) {
                             freeCrossSpace - paddingBorder.crossEnd(dir)
                         } else {
                             paddingBorder.crossStart(dir)
@@ -1214,38 +1240,43 @@ internal fun Forest.computeInternal(
                 }
             };
 
-            self.nodes[child].layout = result::Layout {
-                order: order as u32,
-                size: result.size,
-                location: Point {
-                    x: if isRow { offsetMain } else { offsetCross },
-                    y: if isColumn { offsetMain } else { offsetCross },
-                },
-            };
+            child.layout = Layout(
+                order = order.toUInt(),
+                size = result.size,
+                location = Point(
+                    x = if (isRow) {
+                        offsetMain
+                    } else {
+                        offsetCross
+                    },
+                    y = if (isColumn) {
+                        offsetMain
+                    } else {
+                        offsetCross
+                    },
+                ),
+            );
         }
     }
 
-    fn hiddenLayout(nodes: &mut [NodeData], children: &[sys::ChildrenVec<NodeId>], node: NodeId, order: u32) {
-        nodes[node].layout = result::Layout { order, size: Size::zero(), location: Point::zero() };
 
-        for (order, child) in children[node].iter().enumerate() {
-            hiddenLayout(nodes, children, *child, order as );
+    fun hiddenLayout(node: NodeId, order: UInt) {
+        node.layout = Layout ( order, size = Size.zero(), location = Point.zero() );
+
+        for ((order, child) in node.children.withIndex()) {
+            hiddenLayout(child, order.toUInt());
         }
     }
 
-    for (order, child) in self.children[node].iter().enumerate() {
-        if self.nodes[*child].style.display == Display::None {
-            hiddenLayout(&mut self.nodes, &self.children, *child, order as );
+
+    for ((order, child) in node.children.withIndex()) {
+        if (child.style.display == Display.None) {
+            hiddenLayout(child, order.toUInt());
         }
     }
 
-    var result = ComputeResult { size: containerSize };
-    *self.cache(node, mainSize) =
-        Some(result::Cache { nodeSize, parentSize, performLayout, result: result.clone() });
+    var result = ComputeResult(size = containerSize);
+    setCache(node, mainSize, Cache(nodeSize, parentSize, performLayout, result = result.clone()));
 
-    result
-
-*/
-
-    TODO()
+    return result
 }

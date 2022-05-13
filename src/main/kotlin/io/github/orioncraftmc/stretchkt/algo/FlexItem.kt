@@ -33,6 +33,6 @@ internal data class FlexItem(
     // offset is the relative position from the item's natural flow position based on
     // relative position values, alignment, and justification. Does not include margin/padding/border.
     var offsetMain: Float,
-    val offsetCross: Float,
+    var offsetCross: Float,
 )
 
