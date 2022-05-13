@@ -1,10 +1,9 @@
 package io.github.orioncraftmc.stretchkt.number
 
-import io.github.orioncraftmc.stretchkt.traits.MathOpsTrait
 import kotlin.math.max
 import kotlin.math.min
 
-sealed class StretchNumber : OrElse<Float>, MathOpsTrait<StretchNumber> {
+sealed class StretchNumber : OrElse<Float> {
 
     abstract fun orElse(other: StretchNumber): StretchNumber
 
@@ -25,6 +24,11 @@ sealed class StretchNumber : OrElse<Float>, MathOpsTrait<StretchNumber> {
         return other
     }
 
+    abstract operator fun plus(other: StretchNumber): StretchNumber
+    abstract operator fun minus(other: StretchNumber): StretchNumber
+    abstract operator fun times(other: StretchNumber): StretchNumber
+    abstract operator fun div(other: StretchNumber): StretchNumber
+
     abstract fun asFloat(): Float
 
     class Defined internal constructor(val value: Float) : StretchNumber() {
@@ -32,6 +36,7 @@ sealed class StretchNumber : OrElse<Float>, MathOpsTrait<StretchNumber> {
         override fun orElse(other: StretchNumber): StretchNumber = this
 
         override val isDefined get() = true
+
         override fun plus(other: StretchNumber): StretchNumber {
             if (other is Defined) return from(value + other.value)
             return this
@@ -64,12 +69,10 @@ sealed class StretchNumber : OrElse<Float>, MathOpsTrait<StretchNumber> {
         override fun orElse(other: StretchNumber): StretchNumber = other
 
         override val isDefined get() = false
+
         override fun plus(other: StretchNumber): StretchNumber = Undefined
-
         override fun minus(other: StretchNumber): StretchNumber = Undefined
-
         override fun times(other: StretchNumber): StretchNumber = Undefined
-
         override fun div(other: StretchNumber): StretchNumber = Undefined
 
         override fun asFloat(): Float = Float.NaN

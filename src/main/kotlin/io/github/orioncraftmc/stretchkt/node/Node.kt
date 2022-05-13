@@ -31,6 +31,19 @@ class Node {
             Stretch.setChildren(this, value)
         }
 
+    var style: Style
+        get() {
+            return Stretch.style(this)
+        }
+        set(value) {
+            Stretch.setStyle(this, value)
+        }
+
+    val dirty: Boolean
+        get() {
+            return Stretch.dirty(this)
+        }
+
     fun addChild(child: Node) {
         Stretch.addChild(this, child)
     }
@@ -48,20 +61,8 @@ class Node {
         return Stretch.removeChildAtIndex(this, index)
     }
 
-    fun getStyle(): Style {
-        return Stretch.style(this)
-    }
-
-    fun setStyle(style: Style) {
-        Stretch.setStyle(this, style)
-    }
-
     fun markDirty() {
         Stretch.markDirty(this)
-    }
-
-    fun isDirty(): Boolean {
-        return Stretch.dirty(this)
     }
 
     val childCount: Int
