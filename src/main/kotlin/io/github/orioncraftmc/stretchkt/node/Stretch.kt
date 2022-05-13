@@ -10,11 +10,11 @@ import io.github.orioncraftmc.stretchkt.style.Style
 object Stretch {
     private val forest: Forest = Forest()
 
-    fun newNode(style: Style, children: List<Node> = emptyList()): Node {
+    fun newNode(style: Style = Style(), children: List<Node> = emptyList()): Node {
         return Node(style, children)
     }
 
-    fun newLeaf(style: Style, measure: MeasureFunc? = null): Node {
+    fun newLeaf(style: Style = Style(), measure: MeasureFunc? = null): Node {
         return Node(style, measure)
     }
 

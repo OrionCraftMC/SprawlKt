@@ -16,13 +16,15 @@ internal fun Float.maybeMax(other: StretchNumber): Float {
     return Float.NaN
 }
 
-internal fun Float.maybeMax(other: Float): Float {
-    if (other.isDefined()) return max(other, this)
+internal fun Float.maybeMin(other: Float): Float {
+    if (this.isDefined() && other.isDefined()) return min(other, this)
+    if (this.isDefined()) return this
     return Float.NaN
 }
 
-internal fun Float.maybeMin(other: Float): Float {
-    if (other.isDefined()) return min(other, this)
+internal fun Float.maybeMax(other: Float): Float {
+    if (this.isDefined() && other.isDefined()) return max(other, this)
+    if (this.isDefined()) return this
     return Float.NaN
 }
 
