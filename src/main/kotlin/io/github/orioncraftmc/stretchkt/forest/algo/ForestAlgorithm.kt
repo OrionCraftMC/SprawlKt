@@ -787,7 +787,7 @@ internal fun Forest.computeInternal(
                 if (childStyle.alignSelf(node.style) == AlignSelf.Stretch
                     && childStyle.crossMarginStart(dir) != StretchDimension.Auto
                     && childStyle.crossMarginEnd(dir) != StretchDimension.Auto
-                    && childStyle.crossSize(dir) == StretchDimension.Auto
+                    && childStyle.crossSize(dir) != StretchDimension.Auto //TODO: WHAT?! == -> != fixes issues with measuring...
                 ) {
                     (lineCrossSize - child.margin.cross(dir))
                         .maybeMax(child.minSize.cross(dir))
