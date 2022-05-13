@@ -11,9 +11,7 @@ import io.github.orioncraftmc.stretchkt.style.Style
  *
  * PORT NOTE: The implementation of this class differs from the original implementation.
  */
-internal data class Forest(
-    val nodes: HashSet<NodeData> = HashSet(),
-) {
+internal class Forest {
 
     fun withCapacity(capacity: Int): Forest {
         // TODO: Check if capacity is needed
@@ -21,16 +19,11 @@ internal data class Forest(
     }
 
     fun newLeaf(style: Style, measure: MeasureFunc): NodeData {
-        return NodeData(style, measure).also {
-            this.nodes.add(it)
-        }
+        return NodeData(style, measure)
     }
 
     fun newNode(style: Style, children: Collection<NodeData>): NodeData {
         return NodeData(style).also { newNode ->
-            // First, add the node
-            this.nodes.add(newNode)
-
             // Then, add the children to the node
             newNode.children.addAll(children)
 
@@ -49,15 +42,13 @@ internal data class Forest(
     }
 
     fun clear() {
-        this.nodes.forEach { n -> n.children.clear(); n.parents.clear() }
-        this.nodes.clear()
+        // PORT NOTE: The implementation of this method differs from the original implementation.
+        throw Exception("Port doesn't keep a list of nodes, so this method is not needed")
     }
 
 
     /// Removes a node and swaps with the last node.
     fun swapRemove(node: NodeData): NodeData? {
-        // PORT NOTE: The implementation of this method differs from the original implementation.
-        nodes.remove(node)
 
         // Remove old node as parent from all its chilren.
         node.children.forEach { child ->
