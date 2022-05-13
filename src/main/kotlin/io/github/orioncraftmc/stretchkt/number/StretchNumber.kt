@@ -15,13 +15,13 @@ sealed class StretchNumber : OrElse<Float> {
     fun maybeMin(other: StretchNumber): StretchNumber {
         if (this is Defined && other is Defined) return from(min(this.value, other.value))
         if (this is Defined) return this
-        return other
+        return Undefined
     }
 
     fun maybeMax(other: StretchNumber): StretchNumber {
         if (this is Defined && other is Defined) return from(max(this.value, other.value))
         if (this is Defined) return this
-        return other
+        return Undefined
     }
 
     abstract operator fun plus(other: StretchNumber): StretchNumber
