@@ -27,12 +27,12 @@ internal data class FlexItem(
     val targetSize: Size<Float>,
     val outerTargetSize: Size<Float>,
 
-    val baseline: Float,
+    var baseline: Float,
 
     // temporary values for holding offset in the main / cross direction.
     // offset is the relative position from the item's natural flow position based on
     // relative position values, alignment, and justification. Does not include margin/padding/border.
-    val offsetMain: Float,
+    var offsetMain: Float,
     val offsetCross: Float,
 )
 

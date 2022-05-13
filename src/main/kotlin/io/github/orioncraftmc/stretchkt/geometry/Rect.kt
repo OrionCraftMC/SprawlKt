@@ -4,10 +4,10 @@ import io.github.orioncraftmc.stretchkt.style.enums.FlexDirection
 
 
 data class Rect<T>(
-    val start: T,
-    val end: T,
-    val top: T /* Just like me */,
-    val bottom: T /* Just like KingTux */
+    var start: T,
+    var end: T,
+    var top: T,
+    var bottom: T
 ) {
 
     internal fun <R> map(transform: (T) -> R): Rect<R> {
