@@ -1,19 +1,17 @@
 package io.github.orioncraftmc.stretchkt.tests
 
-import io.github.orioncraftmc.stretchkt.extensions.swapRemove
+import io.github.orioncraftmc.stretchkt.extensions.splitAtIndex
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
-import kotlin.test.assertEquals
 
 class CollectionExtensionsTest {
     @Test
-    fun `MutableList#swapRemove implementation is correct`() {
-        val v = mutableListOf("foo", "bar", "baz", "qux")
+    fun `List#splitAtIndex implementation is correct`() {
+        val v = mutableListOf(1, 0, 3, 0, 5, 6)
 
-        assertEquals("bar", v.swapRemove(1))
-        assertContentEquals(listOf("foo", "qux", "baz"), v)
+        val (left, right) = v.splitAtIndex(2)
 
-        assertEquals("foo", v.swapRemove(0))
-        assertContentEquals(listOf("baz", "qux"), v)
+        assertContentEquals(listOf(1, 0), left)
+        assertContentEquals(listOf(3, 0, 5, 6), right)
     }
 }

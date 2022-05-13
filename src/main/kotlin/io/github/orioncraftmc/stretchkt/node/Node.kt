@@ -9,12 +9,12 @@ class Node {
 
     internal var internalNodeData: NodeData
 
-    constructor(style: Style, measure: MeasureFunc) {
-        this.internalNodeData = Stretch.newLeaf(style, measure).also { it.exposedNode = this }
+    constructor(style: Style, measure: MeasureFunc? = null) {
+        this.internalNodeData = Stretch.newLeafInternal(style, measure).also { it.exposedNode = this }
     }
 
-    constructor(style: Style, children: List<Node>) {
-        this.internalNodeData = Stretch.newNode(style, children).also { it.exposedNode = this }
+    constructor(style: Style, children: List<Node> = emptyList()) {
+        this.internalNodeData = Stretch.newNodeInternal(style, children).also { it.exposedNode = this }
     }
 
     var measure: MeasureFunc?
@@ -37,6 +37,11 @@ class Node {
         }
         set(value) {
             Stretch.setStyle(this, value)
+        }
+
+    val layout: Layout
+        get() {
+            return Stretch.layout(this)
         }
 
     val dirty: Boolean

@@ -7,15 +7,27 @@ import io.github.orioncraftmc.stretchkt.style.enums.StretchDimension
 
 data class Size<T>(var width: T, var height: T) {
     companion object {
+
+        @JvmStatic
+        fun zero() = Size(0f, 0f)
+
+        @JvmStatic
+        fun zeroNumber() = Size(StretchNumber.zero, StretchNumber.zero)
+
         @JvmStatic
         fun undefinedDimension(): Size<StretchDimension> = Size(StretchDimension.Undefined, StretchDimension.Undefined)
 
         @JvmStatic
         fun undefinedNumber(): Size<StretchNumber> = Size(StretchNumber.Undefined, StretchNumber.Undefined)
 
-        fun zero() = Size(0f, 0f)
+        @JvmStatic
+        fun <T> of(width: T, height: T): Size<T> = Size(width, height)
 
-        fun zeroNumber() = Size(StretchNumber.zero, StretchNumber.zero)
+        @JvmStatic
+        fun ofPoints(width: Float, height: Float): Size<StretchDimension> = Size(StretchDimension.Points(width), StretchDimension.Points(height))
+
+        @JvmStatic
+        fun ofPercent(width: Float, height: Float): Size<StretchDimension> = Size(StretchDimension.Percent(width), StretchDimension.Percent(height))
     }
 
     fun <R> map(transform: (T) -> R): Size<R> {
