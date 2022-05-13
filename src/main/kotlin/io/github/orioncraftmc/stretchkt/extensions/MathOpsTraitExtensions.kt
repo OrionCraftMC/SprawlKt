@@ -3,41 +3,33 @@ package io.github.orioncraftmc.stretchkt.extensions
 import io.github.orioncraftmc.stretchkt.number.StretchNumber
 
 operator fun StretchNumber.plus(other: Float): Float {
-    if (this is StretchNumber.Defined) return this.value + other
-    return other
+    return plus(StretchNumber.from(other)).asFloat()
 }
 
 operator fun StretchNumber.minus(other: Float): Float {
-    if (this is StretchNumber.Defined) return this.value - other
-    return -other
+    return minus(StretchNumber.from(other)).asFloat()
 }
 
 operator fun StretchNumber.times(other: Float): Float {
-    if (this is StretchNumber.Defined) return this.value * other
-    return other
+    return times(StretchNumber.from(other)).asFloat()
 }
 
 operator fun StretchNumber.div(other: Float): Float {
-    if (this is StretchNumber.Defined) return this.value / other
-    return 1 / other
+    return div(StretchNumber.from(other)).asFloat()
 }
 
 operator fun Float.plus(other: StretchNumber): StretchNumber {
-    if (other is StretchNumber.Defined) return StretchNumber.from(this + other.value)
-    return StretchNumber.from(this)
+    return StretchNumber.from(this).plus(other)
 }
 
 operator fun Float.minus(other: StretchNumber): StretchNumber {
-    if (other is StretchNumber.Defined) return StretchNumber.from(this - other.value)
-    return StretchNumber.from(-this)
+    return StretchNumber.from(this).minus(other)
 }
 
 operator fun Float.times(other: StretchNumber): StretchNumber {
-    if (other is StretchNumber.Defined) return StretchNumber.from(this * other.value)
-    return StretchNumber.from(this)
+    return StretchNumber.from(this).times(other)
 }
 
 operator fun Float.div(other: StretchNumber): StretchNumber {
-    if (other is StretchNumber.Defined) return StretchNumber.from(this / other.value)
-    return StretchNumber.from(1 / this)
+    return StretchNumber.from(this).div(other)
 }
