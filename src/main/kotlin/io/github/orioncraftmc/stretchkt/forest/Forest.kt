@@ -1,5 +1,6 @@
 package io.github.orioncraftmc.stretchkt.forest
 
+import io.github.orioncraftmc.stretchkt.forest.algo.compute
 import io.github.orioncraftmc.stretchkt.geometry.Size
 import io.github.orioncraftmc.stretchkt.node.MeasureFunc
 import io.github.orioncraftmc.stretchkt.number.StretchNumber
@@ -91,7 +92,7 @@ internal data class Forest(
     }
 
     fun computeLayout(node: NodeData, size: Size<StretchNumber>) {
-        //TODO: this.compute(node, size)
+        this.compute(node, size)
     }
 
 }

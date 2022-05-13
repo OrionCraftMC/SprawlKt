@@ -1,4 +1,4 @@
-package io.github.orioncraftmc.stretchkt.algo
+package io.github.orioncraftmc.stretchkt.forest.algo
 
 import io.github.orioncraftmc.stretchkt.extensions.maybeMax
 import io.github.orioncraftmc.stretchkt.extensions.maybeMin

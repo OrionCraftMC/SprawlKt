@@ -1,4 +1,4 @@
-package io.github.orioncraftmc.stretchkt.algo
+package io.github.orioncraftmc.stretchkt.forest.algo
 
 import io.github.orioncraftmc.stretchkt.extensions.*
 import io.github.orioncraftmc.stretchkt.forest.Forest
