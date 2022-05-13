@@ -1,30 +1,22 @@
 package io.github.orioncraftmc.stretchkt.forest
 
+import io.github.orioncraftmc.stretchkt.node.Layout
 import io.github.orioncraftmc.stretchkt.node.MeasureFunc
+import io.github.orioncraftmc.stretchkt.node.Node
 import io.github.orioncraftmc.stretchkt.result.Cache
-import io.github.orioncraftmc.stretchkt.result.Layout
 import io.github.orioncraftmc.stretchkt.style.Style
 
 internal data class NodeData(
-    val style: Style,
-    val measure: MeasureFunc? = null,
+    var style: Style,
+    var measure: MeasureFunc? = null,
     var layout: Layout = Layout(),
     var mainSizeLayoutCache: Cache? = null,
     var otherLayoutCache: Cache? = null,
     var isDirty: Boolean = true,
 
-    val children: HashSet<NodeData> = HashSet(),
-    val parents: HashSet<NodeData> = HashSet()
+    val children: MutableList<NodeData> = mutableListOf(),
+    val parents: MutableList<NodeData> = mutableListOf(),
 
-) {
-    fun newLeaf(style: Style, measure: MeasureFunc?): NodeData {
-        return copy(
-            style = style,
-            measure = measure,
-            isDirty = true,
-            children = HashSet(),
-            parents = HashSet()
-        )
-    }
-}
+    var exposedNode: Node? = null // The node that is exposed to library users
 
+)

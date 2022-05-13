@@ -4,10 +4,9 @@ import io.github.orioncraftmc.stretchkt.extensions.*
 import io.github.orioncraftmc.stretchkt.forest.Forest
 import io.github.orioncraftmc.stretchkt.forest.NodeData
 import io.github.orioncraftmc.stretchkt.geometry.*
-import io.github.orioncraftmc.stretchkt.node.NodeId
+import io.github.orioncraftmc.stretchkt.node.Layout
 import io.github.orioncraftmc.stretchkt.number.StretchNumber
 import io.github.orioncraftmc.stretchkt.result.Cache
-import io.github.orioncraftmc.stretchkt.result.Layout
 import io.github.orioncraftmc.stretchkt.style.enums.*
 import kotlin.math.abs
 
@@ -84,8 +83,9 @@ internal fun Forest.computeInternal(
             return ComputeResult(size = nodeSize.map { s -> s.orElse(0.0f) })
         }
 
-        if (node.measure != null) {
-            val result = ComputeResult(node.measure.measure(nodeSize))
+        val measure = node.measure
+        if (measure != null) {
+            val result = ComputeResult(measure.measure(nodeSize))
             setCache(node, mainSize, Cache(nodeSize, parentSize, performLayout, result = result.clone()))
             return result
         }
@@ -1258,7 +1258,7 @@ internal fun Forest.computeInternal(
     }
 
 
-    fun hiddenLayout(node: NodeId, order: UInt) {
+    fun hiddenLayout(node: NodeData, order: UInt) {
         node.layout = Layout(order, size = Size.zero(), location = Point.zero())
 
         for ((childOrder, child) in node.children.withIndex()) {

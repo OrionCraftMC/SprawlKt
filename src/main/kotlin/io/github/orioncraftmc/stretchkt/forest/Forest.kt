@@ -43,7 +43,7 @@ internal class Forest {
 
     fun clear() {
         // PORT NOTE: The implementation of this method differs from the original implementation.
-        throw Exception("Port doesn't keep a list of nodes, so this method is not needed")
+        throw Exception("Port's implementation of the Forest doesn't keep a list of nodes, so this method is not needed")
     }
 
 
@@ -68,8 +68,8 @@ internal class Forest {
         child.parents.remove(node)
     }
 
-    fun removeChildAtIndex(node: NodeData, index: Int) {
-        throw Exception("Port makes use of a HashSet to store children, thus removing with an index is not supported.")
+    fun removeChildAtIndex(node: NodeData, index: Int): NodeData {
+        return node.children.removeAt(index)
     }
 
     fun markDirty(node: NodeData) {
