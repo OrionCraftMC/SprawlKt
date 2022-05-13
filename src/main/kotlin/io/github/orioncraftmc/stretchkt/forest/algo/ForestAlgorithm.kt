@@ -118,8 +118,8 @@ internal fun Forest.computeInternal(
     val flexItems = node.children
         .asSequence()
         .map { child -> child to child.style }
-        .filter { (nodeData, style) -> style.positionType != PositionType.Absolute }
-        .filter { (nodeData, style) -> style.display != Display.None }
+        .filter { (_, style) -> style.positionType != PositionType.Absolute }
+        .filter { (_, style) -> style.display != Display.None }
         .map { (child, childStyle) ->
             FlexItem(
                 node = child,
@@ -250,8 +250,7 @@ internal fun Forest.computeInternal(
     // used min and max main sizes (and flooring the content box size at zero).
 
     for (child in flexItems) {
-        child.innerFlexBasis = child.flexBasis - child.padding.main(dir)
-        -child.border.main(dir)
+        child.innerFlexBasis = child.flexBasis - child.padding.main(dir) - child.border.main(dir)
 
         // TODO - not really spec abiding but needs to be done somewhere. probably somewhere else though.
         // The following logic was developed not from the spec but by trial and error looking into how
@@ -429,8 +428,7 @@ internal fun Forest.computeInternal(
 
             val usedSpace: Float = line.items
                 .map { child ->
-                    child.margin.main(dir)
-                    +(if (child.frozen) child.targetSize.main(dir) else child.flexBasis)
+                    child.margin.main(dir) + (if (child.frozen) child.targetSize.main(dir) else child.flexBasis)
                 }
                 .sum()
 
@@ -746,7 +744,7 @@ internal fun Forest.computeInternal(
 
         if (totalCross < innerCross) {
             val remaining = innerCross - totalCross
-            val addition = remaining / flexLines.size as Float
+            val addition = remaining / flexLines.size.toFloat()
             flexLines.forEach { line -> line.crossSize += addition }
         }
     }
