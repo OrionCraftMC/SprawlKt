@@ -24,9 +24,9 @@ data class Style(
     var flexGrow: Float = 0f,
     var flexShrink: Float = 1.0f,
     var flexBasis: StretchDimension = StretchDimension.Auto,
-    var size: Size<StretchDimension> = Size.undefinedDimension(),
-    var minSize: Size<StretchDimension> = Size.undefinedDimension(),
-    var maxSize: Size<StretchDimension> = Size.undefinedDimension(),
+    var size: Size<StretchDimension> = Size.autoDimension(),
+    var minSize: Size<StretchDimension> = Size.autoDimension(),
+    var maxSize: Size<StretchDimension> = Size.autoDimension(),
     var aspectRatio: StretchNumber = StretchNumber.Undefined,
 ) {
 
