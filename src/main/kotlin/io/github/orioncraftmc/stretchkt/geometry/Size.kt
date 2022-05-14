@@ -18,6 +18,9 @@ data class Size<T>(var width: T, var height: T) {
         fun undefinedDimension(): Size<StretchDimension> = Size(StretchDimension.Undefined, StretchDimension.Undefined)
 
         @JvmStatic
+        fun autoDimension(): Size<StretchDimension> = Size(StretchDimension.Auto, StretchDimension.Auto)
+
+        @JvmStatic
         fun undefinedNumber(): Size<StretchNumber> = Size(StretchNumber.Undefined, StretchNumber.Undefined)
 
         @JvmStatic
