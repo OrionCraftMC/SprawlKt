@@ -26,6 +26,18 @@ object Stretch {
         return forest.newNode(style, children.map { it.internalNodeData })
     }
 
+    fun remove(node: Node) {
+        // Disconnect the node from its parents
+        for (parent in ArrayList(node.internalNodeData.parents)) {
+            removeChild(getExposedNode(parent), node)
+        }
+
+        // Disconnect the node from its children
+        for (child in ArrayList(node.internalNodeData.children)) {
+            removeChild(node, getExposedNode(child))
+        }
+    }
+
     fun setMeasure(node: Node, measure: MeasureFunc?) {
         node.internalNodeData.measure = measure
         forest.markDirty(node.internalNodeData)
@@ -80,6 +92,7 @@ object Stretch {
         return node.children
     }
 
+
     fun childAtIndex(node: Node, index: Int): Node {
         return node.children[index]
     }
@@ -87,7 +100,6 @@ object Stretch {
     fun childCount(node: Node): Int {
         return node.children.size
     }
-
 
     fun dirty(node: Node): Boolean {
         return node.internalNodeData.isDirty
