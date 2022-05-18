@@ -120,12 +120,58 @@ internal fun Forest.computeConstants(
     )
 }
 
+
+/**
+ * Generate anonymous flex items.
+ *
+ * # [9.1. Initial Setup](https://www.w3.org/TR/css-flexbox-1/#box-manip)
+ *
+ * - [**Generate anonymous flex items**](https://www.w3.org/TR/css-flexbox-1/#algo-anon-box) as described in [§4 Flex Items](https://www.w3.org/TR/css-flexbox-1/#flex-items).
+*/
+private fun generateAnonymousFlexItems(
+    node: NodeData,
+    constants: AlgoConstants
+) = node.children
+    .asSequence()
+    .map { child -> child to child.style }
+    .filter { (_, style) -> style.positionType != PositionType.Absolute }
+    .filter { (_, style) -> style.display != Display.None }
+    .map { (child, childStyle) ->
+        FlexItem(
+            node = child,
+            size = childStyle.size.resolve(constants.nodeInnerSize),
+            minSize = childStyle.minSize.resolve(constants.nodeInnerSize),
+            maxSize = childStyle.maxSize.resolve(constants.nodeInnerSize),
+
+            position = childStyle.position.zipSize(constants.nodeInnerSize) { p, s -> p.resolve(s) },
+            margin = childStyle.margin.map { m -> m.resolve(constants.nodeInnerSize.width).orElse(0.0f) },
+            padding = childStyle.padding.map { p -> p.resolve(constants.nodeInnerSize.width).orElse(0.0f) },
+            border = childStyle.border.map { b -> b.resolve(constants.nodeInnerSize.width).orElse(0.0f) },
+
+            flexBasis = 0.0f,
+            innerFlexBasis = 0.0f,
+            violation = 0.0f,
+            frozen = false,
+
+            hypotheticalInnerSize = Size.zero(),
+            hypotheticalOuterSize = Size.zero(),
+            targetSize = Size.zero(),
+            outerTargetSize = Size.zero(),
+
+            baseline = 0.0f,
+
+            offsetMain = 0.0f,
+            offsetCross = 0.0f,
+        )
+    }.toList()
+
+
 /**
  * Determine the available main and cross space for the flex items.
  *
  * # [9.2. Line Length Determination](https://www.w3.org/TR/css-flexbox-1/#line-sizing)
  *
- * - 2. [**Determine the available main and cross space for the flex items**](https://www.w3.org/TR/css-flexbox-1/#algo-available).
+ * - [**Determine the available main and cross space for the flex items**](https://www.w3.org/TR/css-flexbox-1/#algo-available).
  * For each dimension, if that dimension of the flex container’s content box is a definite size, use that;
  * if that dimension of the flex container is being sized under a min or max-content constraint, the available space in that dimension is that constraint;
  * otherwise, subtract the flex container’s margin, border, and padding from the space available to the flex container in that dimension and use that value.
@@ -180,47 +226,18 @@ internal fun Forest.computeInternal(
         )
     }
 
-    // 9.2. Line Length Determination
+    // 9. Flex Layout Algorithm
+
+    // 9.1. Initial Setup
 
     // 1. Generate anonymous flex items as described in §4 Flex Items.
+    val flexItems = generateAnonymousFlexItems(node, constants)
+
+    // 9.2. Line Length Determination
 
     // 2. Determine the available main and cross space for the flex items.
     val availableSpace = determineAvailableSpace(nodeSize, parentSize, constants)
 
-    val flexItems = node.children
-        .asSequence()
-        .map { child -> child to child.style }
-        .filter { (_, style) -> style.positionType != PositionType.Absolute }
-        .filter { (_, style) -> style.display != Display.None }
-        .map { (child, childStyle) ->
-            FlexItem(
-                node = child,
-                size = childStyle.size.resolve(constants.nodeInnerSize),
-                minSize = childStyle.minSize.resolve(constants.nodeInnerSize),
-                maxSize = childStyle.maxSize.resolve(constants.nodeInnerSize),
-
-                position = childStyle.position.zipSize(constants.nodeInnerSize) { p, s -> p.resolve(s) },
-                margin = childStyle.margin.map { m -> m.resolve(constants.nodeInnerSize.width).orElse(0.0f) },
-                padding = childStyle.padding.map { p -> p.resolve(constants.nodeInnerSize.width).orElse(0.0f) },
-                border = childStyle.border.map { b -> b.resolve(constants.nodeInnerSize.width).orElse(0.0f) },
-
-                flexBasis = 0.0f,
-                innerFlexBasis = 0.0f,
-                violation = 0.0f,
-                frozen = false,
-
-                hypotheticalInnerSize = Size.zero(),
-                hypotheticalOuterSize = Size.zero(),
-                targetSize = Size.zero(),
-                outerTargetSize = Size.zero(),
-
-                baseline = 0.0f,
-
-                offsetMain = 0.0f,
-                offsetCross = 0.0f,
-            )
-
-        }.toList()
 
     val hasBaselineChild = flexItems
         .any { child ->
