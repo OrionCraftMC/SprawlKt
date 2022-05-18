@@ -188,64 +188,14 @@ private fun determineAvailableSpace(
     )
 }
 
-internal fun Forest.computeInternal(
+private fun Forest.determineFlexBaseSize(
     node: NodeData,
     nodeSize: Size<StretchNumber>,
-    parentSize: Size<StretchNumber>,
-    performLayout: Boolean,
-    mainSize: Boolean,
-): ComputeResult {
-    node.isDirty = false
-
-    // First we check if we have a result for the given input
-    val cache = computeFromCache(node, nodeSize, parentSize, performLayout, mainSize)
-    if (cache != null) return cache
-
-    // Define some general constants we will need for the remainder
-    // of the algorithm.
-    val constants = computeConstants(node, nodeSize, parentSize, performLayout, mainSize)
-
-    // If this is a leaf node we can skip a lot of this function in some cases
-    if (node.children.isEmpty()) {
-        if (nodeSize.width.isDefined && nodeSize.height.isDefined) {
-            return ComputeResult(size = nodeSize.map { s -> s.orElse(0.0f) })
-        }
-
-        val measure = node.measure
-        if (measure != null) {
-            val result = ComputeResult(measure.measure(nodeSize))
-            setCache(node, mainSize, Cache(nodeSize, parentSize, performLayout, result = result.clone()))
-            return result
-        }
-
-        return ComputeResult(
-            size = Size(
-                width = (nodeSize.width.orElse(StretchNumber.zero) + constants.paddingBorder.horizontal),
-                height = (nodeSize.height.orElse(StretchNumber.zero) + constants.paddingBorder.vertical),
-            ),
-        )
-    }
-
-    // 9. Flex Layout Algorithm
-
-    // 9.1. Initial Setup
-
-    // 1. Generate anonymous flex items as described in §4 Flex Items.
-    val flexItems = generateAnonymousFlexItems(node, constants)
-
-    // 9.2. Line Length Determination
-
-    // 2. Determine the available main and cross space for the flex items.
-    val availableSpace = determineAvailableSpace(nodeSize, parentSize, constants)
-
-
-    val hasBaselineChild = flexItems
-        .any { child ->
-            child.node.style.alignSelf(node.style) == AlignSelf.Baseline
-        }
-
+    constants: AlgoConstants,
+    availableSpace: Size<Float>,
+    flexItems: List<FlexItem>
+) {
     // TODO - this does not follow spec. See commented out code below
-    // 3. Determine the flex base size and hypothetical main size of each item:
 
     for (child in flexItems) {
 
@@ -372,7 +322,66 @@ internal fun Forest.computeInternal(
                 child.hypotheticalInnerSize.main(constants.dir) + child.margin.main(constants.dir)
             )
     }
+}
 
+internal fun Forest.computeInternal(
+    node: NodeData,
+    nodeSize: Size<StretchNumber>,
+    parentSize: Size<StretchNumber>,
+    performLayout: Boolean,
+    mainSize: Boolean,
+): ComputeResult {
+    node.isDirty = false
+
+    // First we check if we have a result for the given input
+    val cache = computeFromCache(node, nodeSize, parentSize, performLayout, mainSize)
+    if (cache != null) return cache
+
+    // Define some general constants we will need for the remainder
+    // of the algorithm.
+    val constants = computeConstants(node, nodeSize, parentSize, performLayout, mainSize)
+
+    // If this is a leaf node we can skip a lot of this function in some cases
+    if (node.children.isEmpty()) {
+        if (nodeSize.width.isDefined && nodeSize.height.isDefined) {
+            return ComputeResult(size = nodeSize.map { s -> s.orElse(0.0f) })
+        }
+
+        val measure = node.measure
+        if (measure != null) {
+            val result = ComputeResult(measure.measure(nodeSize))
+            setCache(node, mainSize, Cache(nodeSize, parentSize, performLayout, result = result.clone()))
+            return result
+        }
+
+        return ComputeResult(
+            size = Size(
+                width = (nodeSize.width.orElse(StretchNumber.zero) + constants.paddingBorder.horizontal),
+                height = (nodeSize.height.orElse(StretchNumber.zero) + constants.paddingBorder.vertical),
+            ),
+        )
+    }
+
+    // 9. Flex Layout Algorithm
+
+    // 9.1. Initial Setup
+
+    // 1. Generate anonymous flex items as described in §4 Flex Items.
+    val flexItems = generateAnonymousFlexItems(node, constants)
+
+    // 9.2. Line Length Determination
+
+    // 2. Determine the available main and cross space for the flex items.
+    val availableSpace = determineAvailableSpace(nodeSize, parentSize, constants)
+
+
+    val hasBaselineChild = flexItems
+        .any { child ->
+            child.node.style.alignSelf(node.style) == AlignSelf.Baseline
+        }
+
+    // 3. Determine the flex base size and hypothetical main size of each item
+    determineFlexBaseSize(node, nodeSize, constants, availableSpace, flexItems)
 
     // 9.3. Main Size Determination
 
