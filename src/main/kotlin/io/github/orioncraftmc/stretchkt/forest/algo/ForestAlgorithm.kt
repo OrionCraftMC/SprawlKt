@@ -10,14 +10,14 @@ import io.github.orioncraftmc.stretchkt.result.Cache
 import io.github.orioncraftmc.stretchkt.style.enums.*
 import kotlin.math.abs
 
-internal fun Forest.computeInternal(
+/// Try to get the computation result from the cache.
+internal fun Forest.computeFromCache(
     node: NodeData,
     nodeSize: Size<StretchNumber>,
     parentSize: Size<StretchNumber>,
     performLayout: Boolean,
     mainSize: Boolean,
-): ComputeResult {
-    node.isDirty = false
+): ComputeResult? {
 
     val cache = cache(node, mainSize)
     // First we check if we have a result for the given input
@@ -48,6 +48,21 @@ internal fun Forest.computeInternal(
         }
     }
 
+    return null
+}
+
+internal fun Forest.computeInternal(
+    node: NodeData,
+    nodeSize: Size<StretchNumber>,
+    parentSize: Size<StretchNumber>,
+    performLayout: Boolean,
+    mainSize: Boolean,
+): ComputeResult {
+    node.isDirty = false;
+
+    // First we check if we have a result for the given input
+    val cache = computeFromCache(node, nodeSize, parentSize, performLayout, mainSize)
+    if (cache != null) return cache
 
     // Define some general constants we will need for the remainder
     // of the algorithm.
