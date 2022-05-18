@@ -51,21 +51,34 @@ internal fun Forest.computeFromCache(
     return null
 }
 
-internal fun Forest.computeInternal(
+/**
+ * Constant values that can be reused for the flexbox algorithm.
+ */
+data class AlgoConstants(
+    val dir: FlexDirection,
+    val isRow: Boolean,
+    val isColumn: Boolean,
+    val isWrapReverse: Boolean,
+
+    val margin: Rect<Float>,
+    val border: Rect<Float>,
+    val paddingBorder: Rect<Float>,
+
+    val nodeInnerSize: Size<Float>,
+    val containerSize: Size<Float>,
+    val innerContainerSize: Size<Float>,
+)
+
+/**
+ * Compute constants that can be reused during the flexbox algorithm.
+ */
+internal fun Forest.computeConstants(
     node: NodeData,
     nodeSize: Size<StretchNumber>,
     parentSize: Size<StretchNumber>,
     performLayout: Boolean,
     mainSize: Boolean,
-): ComputeResult {
-    node.isDirty = false;
-
-    // First we check if we have a result for the given input
-    val cache = computeFromCache(node, nodeSize, parentSize, performLayout, mainSize)
-    if (cache != null) return cache
-
-    // Define some general constants we will need for the remainder
-    // of the algorithm.
+): AlgoConstants {
 
     val dir = node.style.flexDirection
     val isRow = dir.isRow()
@@ -83,7 +96,6 @@ internal fun Forest.computeInternal(
         bottom = padding.bottom + border.bottom,
     )
 
-
     val nodeInnerSize = Size(
         width = nodeSize.width - paddingBorder.horizontal,
         height = nodeSize.height - paddingBorder.vertical,
@@ -91,6 +103,40 @@ internal fun Forest.computeInternal(
 
     val containerSize = Size.zero()
     val innerContainerSize = Size.zero()
+
+    return AlgoConstants(
+        dir = dir,
+        isRow = isRow,
+        isColumn = isColumn,
+        isWrapReverse = isWrapReverse,
+
+        margin = margin,
+        border = border,
+        paddingBorder = paddingBorder,
+
+        nodeInnerSize = nodeInnerSize,
+        containerSize = containerSize,
+        innerContainerSize = innerContainerSize,
+    )
+}
+
+
+internal fun Forest.computeInternal(
+    node: NodeData,
+    nodeSize: Size<StretchNumber>,
+    parentSize: Size<StretchNumber>,
+    performLayout: Boolean,
+    mainSize: Boolean,
+): ComputeResult {
+    node.isDirty = false
+
+    // First we check if we have a result for the given input
+    val cache = computeFromCache(node, nodeSize, parentSize, performLayout, mainSize)
+    if (cache != null) return cache
+
+    // Define some general constants we will need for the remainder
+    // of the algorithm.
+    val constants = computeConstants(node, nodeSize, parentSize, performLayout, mainSize)
 
     // If this is a leaf node we can skip a lot of this function in some cases
     if (node.children.isEmpty()) {
@@ -107,8 +153,8 @@ internal fun Forest.computeInternal(
 
         return ComputeResult(
             size = Size(
-                width = (nodeSize.width.orElse(StretchNumber.zero) + paddingBorder.horizontal),
-                height = (nodeSize.height.orElse(StretchNumber.zero) + paddingBorder.vertical),
+                width = (nodeSize.width.orElse(StretchNumber.zero) + constants.paddingBorder.horizontal),
+                height = (nodeSize.height.orElse(StretchNumber.zero) + constants.paddingBorder.vertical),
             ),
         )
     }
@@ -138,14 +184,14 @@ internal fun Forest.computeInternal(
         .map { (child, childStyle) ->
             FlexItem(
                 node = child,
-                size = childStyle.size.resolve(nodeInnerSize),
-                minSize = childStyle.minSize.resolve(nodeInnerSize),
-                maxSize = childStyle.maxSize.resolve(nodeInnerSize),
+                size = childStyle.size.resolve(constants.nodeInnerSize),
+                minSize = childStyle.minSize.resolve(constants.nodeInnerSize),
+                maxSize = childStyle.maxSize.resolve(constants.nodeInnerSize),
 
-                position = childStyle.position.zipSize(nodeInnerSize) { p, s -> p.resolve(s) },
-                margin = childStyle.margin.map { m -> m.resolve(nodeInnerSize.width).orElse(0.0f) },
-                padding = childStyle.padding.map { p -> p.resolve(nodeInnerSize.width).orElse(0.0f) },
-                border = childStyle.border.map { b -> b.resolve(nodeInnerSize.width).orElse(0.0f) },
+                position = childStyle.position.zipSize(constants.nodeInnerSize) { p, s -> p.resolve(s) },
+                margin = childStyle.margin.map { m -> m.resolve(constants.nodeInnerSize.width).orElse(0.0f) },
+                padding = childStyle.padding.map { p -> p.resolve(constants.nodeInnerSize.width).orElse(0.0f) },
+                border = childStyle.border.map { b -> b.resolve(constants.nodeInnerSize.width).orElse(0.0f) },
 
                 flexBasis = 0.0f,
                 innerFlexBasis = 0.0f,
@@ -179,7 +225,7 @@ internal fun Forest.computeInternal(
 
         // A. If the item has a definite used flex basis, that’s the flex base size.
 
-        val flexBasis = childStyle.flexBasis.resolve(nodeInnerSize.main(dir))
+        val flexBasis = childStyle.flexBasis.resolve(constants.nodeInnerSize.main(constants.dir))
         if (flexBasis.isDefined) {
             child.flexBasis = flexBasis.orElse(0.0f)
             continue
@@ -193,7 +239,7 @@ internal fun Forest.computeInternal(
 
         val ratio = childStyle.aspectRatio
         if (ratio is StretchNumber.Defined) {
-            val cross = nodeSize.cross(dir)
+            val cross = nodeSize.cross(constants.dir)
             if (cross is StretchNumber.Defined) {
                 if (childStyle.flexBasis == StretchDimension.Auto) {
                     child.flexBasis = (cross * ratio).asFloat()
@@ -227,7 +273,7 @@ internal fun Forest.computeInternal(
 
         val width: StretchNumber = if (!child.size.width.isDefined
             && childStyle.alignSelf(node.style) == AlignSelf.Stretch
-            && isColumn
+            && constants.isColumn
         ) {
             StretchNumber.from(availableSpace.width)
         } else {
@@ -236,7 +282,7 @@ internal fun Forest.computeInternal(
 
         val height: StretchNumber = if (!child.size.height.isDefined
             && childStyle.alignSelf(node.style) == AlignSelf.Stretch
-            && isRow
+            && constants.isRow
         ) {
             StretchNumber.from(availableSpace.height)
         } else {
@@ -254,9 +300,9 @@ internal fun Forest.computeInternal(
             mainSize = true,
         )
             .size
-            .main(dir)
-            .maybeMax(child.minSize.main(dir))
-            .maybeMin(child.maxSize.main(dir))
+            .main(constants.dir)
+            .maybeMax(child.minSize.main(constants.dir))
+            .maybeMin(child.maxSize.main(constants.dir))
 
 
     }
@@ -265,7 +311,7 @@ internal fun Forest.computeInternal(
     // used min and max main sizes (and flooring the content box size at zero).
 
     for (child in flexItems) {
-        child.innerFlexBasis = child.flexBasis - child.padding.main(dir) - child.border.main(dir)
+        child.innerFlexBasis = child.flexBasis - child.padding.main(constants.dir) - child.border.main(constants.dir)
 
         // TODO - not really spec abiding but needs to be done somewhere. probably somewhere else though.
         // The following logic was developed not from the spec but by trial and error looking into how
@@ -280,22 +326,22 @@ internal fun Forest.computeInternal(
                 mainSize = false
             )
                 .size
-                .main(dir)
-                .maybeMax(child.minSize.main(dir))
-                .maybeMin(child.size.main(dir))
+                .main(constants.dir)
+                .maybeMax(child.minSize.main(constants.dir))
+                .maybeMin(child.size.main(constants.dir))
 
         child
             .hypotheticalInnerSize
             .setMain(
-                dir,
-                child.flexBasis.maybeMax(minMain).maybeMin(child.maxSize.main(dir))
+                constants.dir,
+                child.flexBasis.maybeMax(minMain).maybeMin(child.maxSize.main(constants.dir))
             )
 
         child
             .hypotheticalOuterSize
             .setMain(
-                dir,
-                child.hypotheticalInnerSize.main(dir) + child.margin.main(dir)
+                constants.dir,
+                child.hypotheticalInnerSize.main(constants.dir) + child.margin.main(constants.dir)
             )
     }
 
@@ -327,8 +373,8 @@ internal fun Forest.computeInternal(
                 var lineLength = 0.0f
                 val index = flexItems.withIndex()
                     .find { (idx, child) ->
-                        lineLength += child.hypotheticalOuterSize.main(dir)
-                        val main = availableSpace.main(dir)
+                        lineLength += child.hypotheticalOuterSize.main(constants.dir)
+                        val main = availableSpace.main(constants.dir)
 
                         if (main.isDefined()) {
                             lineLength > main && idx != 0
@@ -355,8 +401,8 @@ internal fun Forest.computeInternal(
         //    use the flex grow factor for the rest of this algorithm; otherwise, use the
         //    flex shrink factor.
 
-        val usedFlexFactor: Float = line.items.map { it.hypotheticalOuterSize.main(dir) }.sum()
-        val growing = usedFlexFactor < nodeInnerSize.main(dir).orElse(0.0f)
+        val usedFlexFactor: Float = line.items.map { it.hypotheticalOuterSize.main(constants.dir) }.sum()
+        val growing = usedFlexFactor < constants.nodeInnerSize.main(constants.dir).orElse(0.0f)
         val shrinking = !growing
 
 
@@ -370,9 +416,9 @@ internal fun Forest.computeInternal(
         for (child in line.items) {
             // TODO - This is not found by reading the spec. Maybe this can be done in some other place
             // instead. This was found by trial and error fixing tests to align with webkit output.
-            if (nodeInnerSize.main(dir).isUndefined() && isRow) {
+            if (constants.nodeInnerSize.main(constants.dir).isUndefined() && constants.isRow) {
                 child.targetSize.setMain(
-                    dir,
+                    constants.dir,
                     computeInternal(
                         node = child.node,
                         nodeSize = Size(
@@ -388,26 +434,26 @@ internal fun Forest.computeInternal(
                         mainSize = false,
                     )
                         .size
-                        .main(dir)
-                        .maybeMax(child.minSize.main(dir))
-                        .maybeMin(child.maxSize.main(dir))
+                        .main(constants.dir)
+                        .maybeMax(child.minSize.main(constants.dir))
+                        .maybeMin(child.maxSize.main(constants.dir))
                 )
             } else {
-                child.targetSize.setMain(dir, child.hypotheticalInnerSize.main(dir))
+                child.targetSize.setMain(constants.dir, child.hypotheticalInnerSize.main(constants.dir))
             }
 
             // TODO this should really only be set inside the if-statement below but
             // that causes the targetMainSize to never be set for some items
 
             child.outerTargetSize.setMain(
-                dir,
-                (child.targetSize.main(dir) + child.margin.main(dir))
+                constants.dir,
+                (child.targetSize.main(constants.dir) + child.margin.main(constants.dir))
             )
 
             val childStyle = child.node.style
             if ((childStyle.flexGrow == 0.0f && childStyle.flexShrink == 0.0f)
-                || (growing && child.flexBasis > child.hypotheticalInnerSize.main(dir))
-                || (shrinking && child.flexBasis < child.hypotheticalInnerSize.main(dir))
+                || (growing && child.flexBasis > child.hypotheticalInnerSize.main(constants.dir))
+                || (shrinking && child.flexBasis < child.hypotheticalInnerSize.main(constants.dir))
             ) {
                 child.frozen = true
             }
@@ -419,10 +465,10 @@ internal fun Forest.computeInternal(
 
         val usedSpace: Float = line.items
             .map { child ->
-                (child.margin.main(dir) + (if (child.frozen) child.targetSize.main(dir) else child.flexBasis))
+                (child.margin.main(constants.dir) + (if (child.frozen) child.targetSize.main(constants.dir) else child.flexBasis))
             }.sum()
 
-        val initialFreeSpace = (nodeInnerSize.main(dir) - usedSpace).orElse(0.0f)
+        val initialFreeSpace = (constants.nodeInnerSize.main(constants.dir) - usedSpace).orElse(0.0f)
 
 
         // 4. Loop
@@ -443,7 +489,7 @@ internal fun Forest.computeInternal(
 
             val usedSpace: Float = line.items
                 .map { child ->
-                    child.margin.main(dir) + (if (child.frozen) child.targetSize.main(dir) else child.flexBasis)
+                    child.margin.main(constants.dir) + (if (child.frozen) child.targetSize.main(constants.dir) else child.flexBasis)
                 }
                 .sum()
 
@@ -458,11 +504,11 @@ internal fun Forest.computeInternal(
                 }
 
             val freeSpace = if (growing && sumFlexGrow < 1.0f) {
-                (initialFreeSpace * sumFlexGrow).maybeMin(nodeInnerSize.main(dir) - usedSpace)
+                (initialFreeSpace * sumFlexGrow).maybeMin(constants.nodeInnerSize.main(constants.dir) - usedSpace)
             } else if (shrinking && sumFlexShrink < 1.0f) {
-                (initialFreeSpace * sumFlexShrink).maybeMax(nodeInnerSize.main(dir) - usedSpace)
+                (initialFreeSpace * sumFlexShrink).maybeMax(constants.nodeInnerSize.main(constants.dir) - usedSpace)
             } else {
-                (nodeInnerSize.main(dir) - usedSpace).orElse(0.0f)
+                (constants.nodeInnerSize.main(constants.dir) - usedSpace).orElse(0.0f)
             }
 
 
@@ -489,7 +535,7 @@ internal fun Forest.computeInternal(
                 if (growing && sumFlexGrow > 0.0f) {
                     for (child in unfrozen) {
                         child.targetSize.setMain(
-                            dir,
+                            constants.dir,
                             child.flexBasis
                                     + freeSpace * (child.node.style.flexGrow / sumFlexGrow),
                         )
@@ -504,7 +550,7 @@ internal fun Forest.computeInternal(
                             val scaledShrinkFactor =
                                 child.innerFlexBasis * child.node.style.flexShrink
                             child.targetSize.setMain(
-                                dir,
+                                constants.dir,
                                 child.flexBasis + freeSpace * (scaledShrinkFactor / sumScaledShrinkFactor),
                             )
                         }
@@ -524,7 +570,7 @@ internal fun Forest.computeInternal(
                 // webkit handled various scenarios. Can probably be solved better by passing in
                 // min-content max-content constraints from the top. Need to figure out correct thing to do here as
                 // just piling on more conditionals.
-                val minMain = if (isRow && child.node.measure == null) {
+                val minMain = if (constants.isRow && child.node.measure == null) {
                     computeInternal(
                         node = child.node,
                         nodeSize = Size.undefinedNumber(),
@@ -537,14 +583,14 @@ internal fun Forest.computeInternal(
                         .maybeMin(child.size.width)
                         .maybeMax(child.minSize.width)
                 } else {
-                    child.minSize.main(dir).asFloat()
+                    child.minSize.main(constants.dir).asFloat()
                 }
 
-                val maxMain = child.maxSize.main(dir)
-                val clamped = child.targetSize.main(dir).maybeMin(maxMain).maybeMax(minMain).maybeMax(0.0f)
-                child.violation = clamped - child.targetSize.main(dir)
-                child.targetSize.setMain(dir, clamped)
-                child.outerTargetSize.setMain(dir, child.targetSize.main(dir) + child.margin.main(dir))
+                val maxMain = child.maxSize.main(constants.dir)
+                val clamped = child.targetSize.main(constants.dir).maybeMin(maxMain).maybeMax(minMain).maybeMax(0.0f)
+                child.violation = clamped - child.targetSize.main(constants.dir)
+                child.targetSize.setMain(constants.dir, clamped)
+                child.outerTargetSize.setMain(constants.dir, child.targetSize.main(constants.dir) + child.margin.main(constants.dir))
 
                 acc + child.violation
             }
@@ -573,24 +619,24 @@ internal fun Forest.computeInternal(
     }
 
     // Not part of the spec from what i can see but seems correct
-    containerSize.setMain(
-        dir,
-        nodeSize.main(dir).orElse(let {
+    constants.containerSize.setMain(
+        constants.dir,
+        nodeSize.main(constants.dir).orElse(let {
             val longestLine = flexLines.fold(Float.MIN_VALUE) { acc, line ->
-                val length: Float = line.items.map { item -> item.outerTargetSize.main(dir) }.sum()
+                val length: Float = line.items.map { item -> item.outerTargetSize.main(constants.dir) }.sum()
                 acc.maybeMax(length)
             }
 
-            val size = longestLine + paddingBorder.main(dir)
-            val main = availableSpace.main(dir)
+            val size = longestLine + constants.paddingBorder.main(constants.dir)
+            val main = availableSpace.main(constants.dir)
             when {
-                main.isDefined() && flexLines.size > 1 && size < main -> availableSpace.main(dir)
+                main.isDefined() && flexLines.size > 1 && size < main -> availableSpace.main(constants.dir)
                 else -> size
             }
         }),
     )
 
-    innerContainerSize.setMain(dir, containerSize.main(dir) - paddingBorder.main(dir))
+    constants.innerContainerSize.setMain(constants.dir, constants.containerSize.main(constants.dir) - constants.paddingBorder.main(constants.dir))
 
     // 9.4. Cross Size Determination
 
@@ -600,48 +646,48 @@ internal fun Forest.computeInternal(
     for (line in flexLines) {
         for (child in line.items) {
             val childCross =
-                child.size.cross(dir).maybeMax(child.minSize.cross(dir)).maybeMin(child.maxSize.cross(dir))
+                child.size.cross(constants.dir).maybeMax(child.minSize.cross(constants.dir)).maybeMin(child.maxSize.cross(constants.dir))
 
             val targetSize = child.targetSize.toStretchNumberSize()
             child.hypotheticalInnerSize.setCross(
-                dir,
+                constants.dir,
                 computeInternal(
                     node = child.node,
                     nodeSize = Size(
-                        width = if (isRow) {
+                        width = if (constants.isRow) {
                             targetSize.width
                         } else {
                             childCross
                         },
-                        height = if (isRow) {
+                        height = if (constants.isRow) {
                             childCross
                         } else {
                             targetSize.height
                         },
                     ),
                     parentSize = Size(
-                        width = if (isRow) {
-                            containerSize.main(dir)
+                        width = if (constants.isRow) {
+                            constants.containerSize.main(constants.dir)
                         } else {
                             availableSpace.width
                         },
-                        height = if (isRow) {
+                        height = if (constants.isRow) {
                             availableSpace.height
                         } else {
-                            containerSize.main(dir)
+                            constants.containerSize.main(constants.dir)
                         },
                     ).toStretchNumberSize(),
                     performLayout = false, mainSize = false,
                 )
                     .size
-                    .cross(dir)
-                    .maybeMax(child.minSize.cross(dir))
-                    .maybeMin(child.maxSize.cross(dir)),
+                    .cross(constants.dir)
+                    .maybeMax(child.minSize.cross(constants.dir))
+                    .maybeMin(child.maxSize.cross(constants.dir)),
             )
 
             child
                 .hypotheticalOuterSize
-                .setCross(dir, child.hypotheticalInnerSize.cross(dir) + child.margin.cross(dir))
+                .setCross(constants.dir, child.hypotheticalInnerSize.cross(constants.dir) + child.margin.cross(constants.dir))
         }
     }
 
@@ -663,27 +709,27 @@ internal fun Forest.computeInternal(
                 val result = computeInternal(
                     node = child.node,
                     nodeSize = Size(
-                        width = if (isRow) {
+                        width = if (constants.isRow) {
                             child.targetSize.width
                         } else {
                             child.hypotheticalInnerSize.width
                         },
-                        height = if (isRow) {
+                        height = if (constants.isRow) {
                             child.hypotheticalInnerSize.height
                         } else {
                             child.targetSize.height
                         },
                     ).toStretchNumberSize(),
                     parentSize = Size(
-                        width = if (isRow) {
-                            StretchNumber.from(containerSize.width)
+                        width = if (constants.isRow) {
+                            StretchNumber.from(constants.containerSize.width)
                         } else {
                             nodeSize.width
                         },
-                        height = if (isRow) {
+                        height = if (constants.isRow) {
                             nodeSize.height
                         } else {
-                            StretchNumber.from(containerSize.height)
+                            StretchNumber.from(constants.containerSize.height)
                         },
                     ),
                     performLayout = true,
@@ -710,8 +756,8 @@ internal fun Forest.computeInternal(
     //    the container’s computed min and max cross sizes. Note that if CSS 2.1’s definition
     //    of min/max-width/height applied more generally, this behavior would fall out automatically.
 
-    if (flexLines.size == 1 && nodeSize.cross(dir).isDefined) {
-        flexLines[0].crossSize = (nodeSize.cross(dir) - paddingBorder.cross(dir)).orElse(0.0f)
+    if (flexLines.size == 1 && nodeSize.cross(constants.dir).isDefined) {
+        flexLines[0].crossSize = (nodeSize.cross(constants.dir) - constants.paddingBorder.cross(constants.dir)).orElse(0.0f)
     } else {
         for (line in flexLines) {
             //    1. Collect all the flex items whose inline-axis is parallel to the main-axis, whose
@@ -733,13 +779,13 @@ internal fun Forest.computeInternal(
                 .map { child ->
                     val childStyle = child.node.style
                     if (childStyle.alignSelf(node.style) == AlignSelf.Baseline
-                        && childStyle.crossMarginStart(dir) != StretchDimension.Auto
-                        && childStyle.crossMarginEnd(dir) != StretchDimension.Auto
-                        && childStyle.crossSize(dir) == StretchDimension.Auto
+                        && childStyle.crossMarginStart(constants.dir) != StretchDimension.Auto
+                        && childStyle.crossMarginEnd(constants.dir) != StretchDimension.Auto
+                        && childStyle.crossSize(constants.dir) == StretchDimension.Auto
                     ) {
-                        maxBaseline - child.baseline + child.hypotheticalOuterSize.cross(dir)
+                        maxBaseline - child.baseline + child.hypotheticalOuterSize.cross(constants.dir)
                     } else {
-                        child.hypotheticalOuterSize.cross(dir)
+                        child.hypotheticalOuterSize.cross(constants.dir)
                     }
                 }
                 .fold(0.0f) { acc, x -> acc.maybeMax(x) }
@@ -753,9 +799,9 @@ internal fun Forest.computeInternal(
     //    by equal amounts such that the sum of their cross sizes exactly equals the
     //    flex container’s inner cross size.
 
-    if (node.style.alignContent == AlignContent.Stretch && nodeSize.cross(dir).isDefined) {
+    if (node.style.alignContent == AlignContent.Stretch && nodeSize.cross(constants.dir).isDefined) {
         val totalCross: Float = flexLines.map { line -> line.crossSize }.sum()
-        val innerCross = (nodeSize.cross(dir) - paddingBorder.cross(dir)).orElse(0.0f)
+        val innerCross = (nodeSize.cross(constants.dir) - constants.paddingBorder.cross(constants.dir)).orElse(0.0f)
 
         if (totalCross < innerCross) {
             val remaining = innerCross - totalCross
@@ -798,21 +844,21 @@ internal fun Forest.computeInternal(
         for (child in line.items) {
             val childStyle = child.node.style
             child.targetSize.setCross(
-                dir,
+                constants.dir,
                 if (childStyle.alignSelf(node.style) == AlignSelf.Stretch
-                    && childStyle.crossMarginStart(dir) != StretchDimension.Auto
-                    && childStyle.crossMarginEnd(dir) != StretchDimension.Auto
-                    && childStyle.crossSize(dir) == StretchDimension.Auto
+                    && childStyle.crossMarginStart(constants.dir) != StretchDimension.Auto
+                    && childStyle.crossMarginEnd(constants.dir) != StretchDimension.Auto
+                    && childStyle.crossSize(constants.dir) == StretchDimension.Auto
                 ) {
-                    (lineCrossSize - child.margin.cross(dir))
-                        .maybeMax(child.minSize.cross(dir))
-                        .maybeMin(child.maxSize.cross(dir))
+                    (lineCrossSize - child.margin.cross(constants.dir))
+                        .maybeMax(child.minSize.cross(constants.dir))
+                        .maybeMin(child.maxSize.cross(constants.dir))
                 } else {
-                    child.hypotheticalInnerSize.cross(dir)
+                    child.hypotheticalInnerSize.cross(constants.dir)
                 },
             )
 
-            child.outerTargetSize.setCross(dir, child.targetSize.cross(dir) + child.margin.cross(dir))
+            child.outerTargetSize.setCross(constants.dir, child.targetSize.cross(constants.dir) + child.margin.cross(constants.dir))
         }
     }
 
@@ -825,16 +871,16 @@ internal fun Forest.computeInternal(
     //     2. Align the items along the main-axis per justify-content.
 
     for (line in flexLines) {
-        val usedSpace: Float = line.items.map { child -> child.outerTargetSize.main(dir) }.sum()
-        val freeSpace = innerContainerSize.main(dir) - usedSpace
+        val usedSpace: Float = line.items.map { child -> child.outerTargetSize.main(constants.dir) }.sum()
+        val freeSpace = constants.innerContainerSize.main(constants.dir) - usedSpace
         var numAutoMargins = 0
 
         for (child in line.items) {
             val childStyle = child.node.style
-            if (childStyle.mainMarginStart(dir) == StretchDimension.Auto) {
+            if (childStyle.mainMarginStart(constants.dir) == StretchDimension.Auto) {
                 numAutoMargins += 1
             }
-            if (childStyle.mainMarginEnd(dir) == StretchDimension.Auto) {
+            if (childStyle.mainMarginEnd(constants.dir) == StretchDimension.Auto) {
                 numAutoMargins += 1
             }
         }
@@ -844,15 +890,15 @@ internal fun Forest.computeInternal(
 
             for (child in line.items) {
                 val childStyle = child.node.style
-                if (childStyle.mainMarginStart(dir) == StretchDimension.Auto) {
-                    if (isRow) {
+                if (childStyle.mainMarginStart(constants.dir) == StretchDimension.Auto) {
+                    if (constants.isRow) {
                         child.margin.start = margin
                     } else {
                         child.margin.top = margin
                     }
                 }
-                if (childStyle.mainMarginEnd(dir) == StretchDimension.Auto) {
-                    if (isRow) {
+                if (childStyle.mainMarginEnd(constants.dir) == StretchDimension.Auto) {
+                    if (constants.isRow) {
                         child.margin.end = margin
                     } else {
                         child.margin.bottom = margin
@@ -861,7 +907,7 @@ internal fun Forest.computeInternal(
             }
         } else {
             val numItems = line.items.size
-            val layoutReverse = dir.isReverse()
+            val layoutReverse = constants.dir.isReverse()
 
             val justifyItem: (Int, FlexItem) -> Unit = { i, child ->
                 val isFirst = i == 0
@@ -928,27 +974,27 @@ internal fun Forest.computeInternal(
         val lineCrossSize = line.crossSize
         val maxBaseline: Float = line.items.map { child -> child.baseline }.fold(0.0f) { acc, x -> acc.maybeMax(x) }
         for (child in line.items) {
-            val freeSpace = lineCrossSize - child.outerTargetSize.cross(dir)
+            val freeSpace = lineCrossSize - child.outerTargetSize.cross(constants.dir)
             val childStyle = child.node.style
 
-            if (childStyle.crossMarginStart(dir) == StretchDimension.Auto
-                && childStyle.crossMarginEnd(dir) == StretchDimension.Auto
+            if (childStyle.crossMarginStart(constants.dir) == StretchDimension.Auto
+                && childStyle.crossMarginEnd(constants.dir) == StretchDimension.Auto
             ) {
-                if (isRow) {
+                if (constants.isRow) {
                     child.margin.top = freeSpace / 2.0f
                     child.margin.bottom = freeSpace / 2.0f
                 } else {
                     child.margin.start = freeSpace / 2.0f
                     child.margin.end = freeSpace / 2.0f
                 }
-            } else if (childStyle.crossMarginStart(dir) == StretchDimension.Auto) {
-                if (isRow) {
+            } else if (childStyle.crossMarginStart(constants.dir) == StretchDimension.Auto) {
+                if (constants.isRow) {
                     child.margin.top = freeSpace
                 } else {
                     child.margin.start = freeSpace
                 }
-            } else if (childStyle.crossMarginEnd(dir) == StretchDimension.Auto) {
-                if (isRow) {
+            } else if (childStyle.crossMarginEnd(constants.dir) == StretchDimension.Auto) {
+                if (constants.isRow) {
                     child.margin.bottom = freeSpace
                 } else {
                     child.margin.end = freeSpace
@@ -960,14 +1006,14 @@ internal fun Forest.computeInternal(
                 child.offsetCross = when (childStyle.alignSelf(node.style)) {
                     AlignSelf.Auto -> 0.0f // Should never happen
                     AlignSelf.FlexStart -> {
-                        if (isWrapReverse) {
+                        if (constants.isWrapReverse) {
                             freeSpace
                         } else {
                             0.0f
                         }
                     }
                     AlignSelf.FlexEnd -> {
-                        if (isWrapReverse) {
+                        if (constants.isWrapReverse) {
                             0.0f
                         } else {
                             freeSpace
@@ -975,12 +1021,12 @@ internal fun Forest.computeInternal(
                     }
                     AlignSelf.Center -> freeSpace / 2.0f
                     AlignSelf.Baseline -> {
-                        if (isRow) {
+                        if (constants.isRow) {
                             maxBaseline - child.baseline
                         } else {
                             // baseline alignment only makes sense if the direction is row
                             // we treat it as flex-start alignment in columns.
-                            if (isWrapReverse) {
+                            if (constants.isWrapReverse) {
                                 freeSpace
                             } else {
                                 0.0f
@@ -988,7 +1034,7 @@ internal fun Forest.computeInternal(
                         }
                     }
                     AlignSelf.Stretch -> {
-                        if (isWrapReverse) {
+                        if (constants.isWrapReverse) {
                             freeSpace
                         } else {
                             0.0f
@@ -1007,21 +1053,21 @@ internal fun Forest.computeInternal(
     //       min and max cross sizes of the flex container.
 
     val totalCrossSize: Float = flexLines.map { line -> line.crossSize }.sum()
-    containerSize.setCross(dir, nodeSize.cross(dir).orElse(totalCrossSize + paddingBorder.cross(dir)))
-    innerContainerSize.setCross(dir, containerSize.cross(dir) - paddingBorder.cross(dir))
+    constants.containerSize.setCross(constants.dir, nodeSize.cross(constants.dir).orElse(totalCrossSize + constants.paddingBorder.cross(constants.dir)))
+    constants.innerContainerSize.setCross(constants.dir, constants.containerSize.cross(constants.dir) - constants.paddingBorder.cross(constants.dir))
 
 
     // We have the container size. If our caller does not care about performing
     // layout we are done now.
     if (!performLayout) {
-        val result = ComputeResult(size = containerSize)
+        val result = ComputeResult(size = constants.containerSize)
         setCache(node, mainSize, Cache(nodeSize, parentSize, performLayout, result = result.clone()))
         return result
     }
 
     // 16. Align all flex lines per align-content.
 
-    val freeSpace = innerContainerSize.cross(dir) - totalCrossSize
+    val freeSpace = constants.innerContainerSize.cross(constants.dir) - totalCrossSize
     val numLines = flexLines.size
 
     val alignLine: (Int, FlexLine) -> Unit = { i, line ->
@@ -1029,14 +1075,14 @@ internal fun Forest.computeInternal(
 
         line.offsetCross = when (node.style.alignContent) {
             AlignContent.FlexStart -> {
-                if (isFirst && isWrapReverse) {
+                if (isFirst && constants.isWrapReverse) {
                     freeSpace
                 } else {
                     0.0f
                 }
             }
             AlignContent.FlexEnd -> {
-                if (isFirst && !isWrapReverse) {
+                if (isFirst && !constants.isWrapReverse) {
                     freeSpace
                 } else {
                     0.0f
@@ -1067,7 +1113,7 @@ internal fun Forest.computeInternal(
         }
     }
 
-    if (isWrapReverse) {
+    if (constants.isWrapReverse) {
         flexLines.asReversed().forEachIndexed(alignLine)
     } else {
         flexLines.forEachIndexed(alignLine)
@@ -1075,42 +1121,42 @@ internal fun Forest.computeInternal(
 
     // Do a final layout pass and gather the resulting layouts
     run {
-        var totalOffsetCross = paddingBorder.crossStart(dir)
+        var totalOffsetCross = constants.paddingBorder.crossStart(constants.dir)
 
         val layoutLine: (FlexLine) -> Unit = { line ->
-            var totalOffsetMain = paddingBorder.mainStart(dir)
+            var totalOffsetMain = constants.paddingBorder.mainStart(constants.dir)
             val lineOffsetCross = line.offsetCross
 
             val layoutItem: (FlexItem) -> Unit = { child ->
                 val result = computeInternal(
                     node = child.node,
                     nodeSize = child.targetSize.toStretchNumberSize(),
-                    parentSize = containerSize.toStretchNumberSize(),
+                    parentSize = constants.containerSize.toStretchNumberSize(),
                     performLayout = true,
                     mainSize = false,
                 )
 
                 val offsetMain =
-                    totalOffsetMain + child.offsetMain + child.margin.mainStart(dir) + (child.position.mainStart(dir)
-                        .orElse(0.0f) - child.position.mainEnd(dir).orElse(0.0f))
+                    totalOffsetMain + child.offsetMain + child.margin.mainStart(constants.dir) + (child.position.mainStart(constants.dir)
+                        .orElse(0.0f) - child.position.mainEnd(constants.dir).orElse(0.0f))
 
                 val offsetCross =
-                    totalOffsetCross + child.offsetCross + lineOffsetCross + child.margin.crossStart(dir) +
-                            (child.position.crossStart(dir).orElse(0.0f) - child.position.crossEnd(dir).orElse(0.0f))
+                    totalOffsetCross + child.offsetCross + lineOffsetCross + child.margin.crossStart(constants.dir) +
+                            (child.position.crossStart(constants.dir).orElse(0.0f) - child.position.crossEnd(constants.dir).orElse(0.0f))
 
                 child.node.layout = Layout(
                     order = node.children.indexOf(child.node).toUInt(),
                     size = result.size,
                     location = Point(
-                        x = if (isRow) offsetMain else offsetCross,
-                        y = if (isColumn) offsetMain else offsetCross,
+                        x = if (constants.isRow) offsetMain else offsetCross,
+                        y = if (constants.isColumn) offsetMain else offsetCross,
                     ),
                 )
 
-                totalOffsetMain += child.offsetMain + child.margin.main(dir) + result.size.main(dir)
+                totalOffsetMain += child.offsetMain + child.margin.main(constants.dir) + result.size.main(constants.dir)
             }
 
-            if (dir.isReverse()) {
+            if (constants.dir.isReverse()) {
                 line.items.asReversed().forEach(layoutItem)
             } else {
                 line.items.forEach(layoutItem)
@@ -1119,7 +1165,7 @@ internal fun Forest.computeInternal(
             totalOffsetCross += lineOffsetCross + line.crossSize
         }
 
-        if (isWrapReverse) {
+        if (constants.isWrapReverse) {
             flexLines.asReversed().forEach(layoutLine)
         } else {
             flexLines.forEach(layoutLine)
@@ -1134,8 +1180,8 @@ internal fun Forest.computeInternal(
             .toList()
 
         for ((order, child) in candidates.withIndex()) {
-            val containerWidth = containerSize.width
-            val containerHeight = containerSize.height
+            val containerWidth = constants.containerSize.width
+            val containerHeight = constants.containerSize.height
 
             val childStyle = child.style
 
@@ -1147,12 +1193,12 @@ internal fun Forest.computeInternal(
             val bottom =
                 childStyle.position.bottom.resolve(containerHeight) + childStyle.margin.bottom.resolve(containerHeight)
 
-            val (startMain, endMain) = if (isRow) {
+            val (startMain, endMain) = if (constants.isRow) {
                 (start to end)
             } else {
                 (top to bottom)
             }
-            val (startCross, endCross) = if (isRow) {
+            val (startCross, endCross) = if (constants.isRow) {
                 (top to bottom)
             } else {
                 (start to end)
@@ -1194,26 +1240,26 @@ internal fun Forest.computeInternal(
                 false,
             )
 
-            val freeMainSpace = containerSize.main(dir) - result
+            val freeMainSpace = constants.containerSize.main(constants.dir) - result
                 .size
-                .main(dir)
-                .maybeMax(childStyle.minMainSize(dir).resolve(nodeInnerSize.main(dir)))
-                .maybeMin(childStyle.maxMainSize(dir).resolve(nodeInnerSize.main(dir)))
+                .main(constants.dir)
+                .maybeMax(childStyle.minMainSize(constants.dir).resolve(constants.nodeInnerSize.main(constants.dir)))
+                .maybeMin(childStyle.maxMainSize(constants.dir).resolve(constants.nodeInnerSize.main(constants.dir)))
 
-            val freeCrossSpace = containerSize.cross(dir) - result
+            val freeCrossSpace = constants.containerSize.cross(constants.dir) - result
                 .size
-                .cross(dir)
-                .maybeMax(childStyle.minCrossSize(dir).resolve(nodeInnerSize.cross(dir)))
-                .maybeMin(childStyle.maxCrossSize(dir).resolve(nodeInnerSize.cross(dir)))
+                .cross(constants.dir)
+                .maybeMax(childStyle.minCrossSize(constants.dir).resolve(constants.nodeInnerSize.cross(constants.dir)))
+                .maybeMin(childStyle.maxCrossSize(constants.dir).resolve(constants.nodeInnerSize.cross(constants.dir)))
 
             val offsetMain = if (startMain.isDefined) {
-                startMain.orElse(0.0f) + border.mainStart(dir)
+                startMain.orElse(0.0f) + constants.border.mainStart(constants.dir)
             } else if (endMain.isDefined) {
-                freeMainSpace - endMain.orElse(0.0f) - border.mainEnd(dir)
+                freeMainSpace - endMain.orElse(0.0f) - constants.border.mainEnd(constants.dir)
             } else {
                 when (node.style.justifyContent) {
-                    JustifyContent.SpaceBetween, JustifyContent.FlexStart -> paddingBorder.mainStart(dir)
-                    JustifyContent.FlexEnd -> freeMainSpace - paddingBorder.mainEnd(dir)
+                    JustifyContent.SpaceBetween, JustifyContent.FlexStart -> constants.paddingBorder.mainStart(constants.dir)
+                    JustifyContent.FlexEnd -> freeMainSpace - constants.paddingBorder.mainEnd(constants.dir)
                     JustifyContent.SpaceEvenly, JustifyContent.SpaceAround, JustifyContent.Center -> {
                         freeMainSpace / 2.0f
                     }
@@ -1221,33 +1267,33 @@ internal fun Forest.computeInternal(
             }
 
             val offsetCross = if (startCross.isDefined) {
-                startCross.orElse(0.0f) + border.crossStart(dir)
+                startCross.orElse(0.0f) + constants.border.crossStart(constants.dir)
             } else if (endCross.isDefined) {
-                freeCrossSpace - endCross.orElse(0.0f) - border.crossEnd(dir)
+                freeCrossSpace - endCross.orElse(0.0f) - constants.border.crossEnd(constants.dir)
             } else {
                 when (childStyle.alignSelf(node.style)) {
                     AlignSelf.Auto -> 0.0f // Should never happen
                     AlignSelf.FlexStart -> {
-                        if (isWrapReverse) {
-                            freeCrossSpace - paddingBorder.crossEnd(dir)
+                        if (constants.isWrapReverse) {
+                            freeCrossSpace - constants.paddingBorder.crossEnd(constants.dir)
                         } else {
-                            paddingBorder.crossStart(dir)
+                            constants.paddingBorder.crossStart(constants.dir)
                         }
                     }
                     AlignSelf.FlexEnd -> {
-                        if (isWrapReverse) {
-                            paddingBorder.crossStart(dir)
+                        if (constants.isWrapReverse) {
+                            constants.paddingBorder.crossStart(constants.dir)
                         } else {
-                            freeCrossSpace - paddingBorder.crossEnd(dir)
+                            freeCrossSpace - constants.paddingBorder.crossEnd(constants.dir)
                         }
                     }
                     AlignSelf.Center -> freeCrossSpace / 2.0f
                     AlignSelf.Baseline -> freeCrossSpace / 2.0f // Treat as center for now until we have baseline support
                     AlignSelf.Stretch -> {
-                        if (isWrapReverse) {
-                            freeCrossSpace - paddingBorder.crossEnd(dir)
+                        if (constants.isWrapReverse) {
+                            freeCrossSpace - constants.paddingBorder.crossEnd(constants.dir)
                         } else {
-                            paddingBorder.crossStart(dir)
+                            constants.paddingBorder.crossStart(constants.dir)
                         }
                     }
                 }
@@ -1257,12 +1303,12 @@ internal fun Forest.computeInternal(
                 order = order.toUInt(),
                 size = result.size,
                 location = Point(
-                    x = if (isRow) {
+                    x = if (constants.isRow) {
                         offsetMain
                     } else {
                         offsetCross
                     },
-                    y = if (isColumn) {
+                    y = if (constants.isColumn) {
                         offsetMain
                     } else {
                         offsetCross
@@ -1288,7 +1334,7 @@ internal fun Forest.computeInternal(
         }
     }
 
-    val result = ComputeResult(size = containerSize)
+    val result = ComputeResult(size = constants.containerSize)
     setCache(node, mainSize, Cache(nodeSize, parentSize, performLayout, result = result.clone()))
 
     return result
