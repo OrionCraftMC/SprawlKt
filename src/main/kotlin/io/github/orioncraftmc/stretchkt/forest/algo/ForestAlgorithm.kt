@@ -120,6 +120,27 @@ internal fun Forest.computeConstants(
     )
 }
 
+/**
+ * Determine the available main and cross space for the flex items.
+ *
+ * # [9.2. Line Length Determination](https://www.w3.org/TR/css-flexbox-1/#line-sizing)
+ *
+ * - 2. [**Determine the available main and cross space for the flex items**](https://www.w3.org/TR/css-flexbox-1/#algo-available).
+ * For each dimension, if that dimension of the flex container’s content box is a definite size, use that;
+ * if that dimension of the flex container is being sized under a min or max-content constraint, the available space in that dimension is that constraint;
+ * otherwise, subtract the flex container’s margin, border, and padding from the space available to the flex container in that dimension and use that value.
+ * **This might result in an infinite value**.
+*/
+private fun determineAvailableSpace(
+    nodeSize: Size<StretchNumber>,
+    parentSize: Size<StretchNumber>,
+    constants: AlgoConstants
+): Size<Float> {
+    return Size(
+        width = nodeSize.width.orElse(parentSize.width - constants.margin.horizontal) - constants.paddingBorder.horizontal,
+        height = nodeSize.height.orElse(parentSize.height - constants.margin.vertical) - constants.paddingBorder.vertical,
+    )
+}
 
 internal fun Forest.computeInternal(
     node: NodeData,
@@ -164,17 +185,7 @@ internal fun Forest.computeInternal(
     // 1. Generate anonymous flex items as described in §4 Flex Items.
 
     // 2. Determine the available main and cross space for the flex items.
-    //    For each dimension, if that dimension of the flex container’s content box
-    //    is a definite size, use that; if that dimension of the flex container is
-    //    being sized under a min or max-content constraint, the available space in
-    //    that dimension is that constraint; otherwise, subtract the flex container’s
-    //    margin, border, and padding from the space available to the flex container
-    //    in that dimension and use that value. This might result in an infinite value.
-
-    val availableSpace = Size(
-        width = nodeSize.width.orElse(parentSize.width - margin.horizontal) - paddingBorder.horizontal,
-        height = nodeSize.height.orElse(parentSize.height - margin.vertical) - paddingBorder.vertical,
-    )
+    val availableSpace = determineAvailableSpace(nodeSize, parentSize, constants)
 
     val flexItems = node.children
         .asSequence()
