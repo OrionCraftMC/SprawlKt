@@ -837,49 +837,7 @@ internal fun Forest.computeInternal(
     }
 
     // 8. Calculate the cross size of each flex line.
-    //    If the flex container is single-line and has a definite cross size, the cross size
-    //    of the flex line is the flex container’s inner cross size. Otherwise, for each flex line:
-    //
-    //    If the flex container is single-line, then clamp the line’s cross-size to be within
-    //    the container’s computed min and max cross sizes. Note that if CSS 2.1’s definition
-    //    of min/max-width/height applied more generally, this behavior would fall out automatically.
-
-    if (flexLines.size == 1 && nodeSize.cross(constants.dir).isDefined) {
-        flexLines[0].crossSize =
-            (nodeSize.cross(constants.dir) - constants.paddingBorder.cross(constants.dir)).orElse(0.0f)
-    } else {
-        for (line in flexLines) {
-            //    1. Collect all the flex items whose inline-axis is parallel to the main-axis, whose
-            //       align-self is baseline, and whose cross-axis margins are both non-auto. Find the
-            //       largest of the distances between each item’s baseline and its hypothetical outer
-            //       cross-start edge, and the largest of the distances between each item’s baseline
-            //       and its hypothetical outer cross-end edge, and sum these two values.
-
-            //    2. Among all the items not collected by the previous step, find the largest
-            //       outer hypothetical cross size.
-
-            //    3. The used cross-size of the flex line is the largest of the numbers found in the
-            //       previous two steps and zero.
-
-            val maxBaseline: Float =
-                line.items.map { child -> child.baseline }.fold(0.0f) { acc, x -> acc.maybeMax(x) }
-            line.crossSize = line
-                .items
-                .map { child ->
-                    val childStyle = child.node.style
-                    if (childStyle.alignSelf(node.style) == AlignSelf.Baseline
-                        && childStyle.crossMarginStart(constants.dir) != StretchDimension.Auto
-                        && childStyle.crossMarginEnd(constants.dir) != StretchDimension.Auto
-                        && childStyle.crossSize(constants.dir) == StretchDimension.Auto
-                    ) {
-                        maxBaseline - child.baseline + child.hypotheticalOuterSize.cross(constants.dir)
-                    } else {
-                        child.hypotheticalOuterSize.cross(constants.dir)
-                    }
-                }
-                .fold(0.0f) { acc, x -> acc.maybeMax(x) }
-        }
-    }
+    calculateCrossSize(flexLines, node, nodeSize, constants)
 
 
     // 9. Handle 'align-content: stretch'. If the flex container has a definite cross size,
@@ -1439,4 +1397,70 @@ internal fun Forest.computeInternal(
     setCache(node, mainSize, Cache(nodeSize, parentSize, performLayout, result = result.clone()))
 
     return result
+}
+
+/**
+ * Calculate the cross size of each flex line.
+ *
+ * # [9.4. Cross Size Determination](https://www.w3.org/TR/css-flexbox-1/#cross-sizing)
+ *
+ * - [**Calculate the cross size of each flex line**](https://www.w3.org/TR/css-flexbox-1/#algo-cross-line).
+ *
+ *     If the flex container is single-line and has a definite cross size, the cross size of the flex line is the flex container’s inner cross size.
+ *
+ *     Otherwise, for each flex line:
+ *
+ *     1. Collect all the flex items whose inline-axis is parallel to the main-axis, whose align-self is baseline, and whose cross-axis margins are both non-auto.
+ *         Find the largest of the distances between each item’s baseline and its hypothetical outer cross-start edge,
+ *         and the largest of the distances between each item’s baseline and its hypothetical outer cross-end edge, and sum these two values.
+ *
+ *     2. Among all the items not collected by the previous step, find the largest outer hypothetical cross size.
+ *
+ *     3. The used cross-size of the flex line is the largest of the numbers found in the previous two steps and zero.
+ *
+ *         If the flex container is single-line, then clamp the line’s cross-size to be within the container’s computed min and max cross sizes.
+ *         **Note that if CSS 2.1’s definition of min/max-width/height applied more generally, this behavior would fall out automatically**.
+ */
+private fun calculateCrossSize(
+    flexLines: List<FlexLine>,
+    node: NodeData,
+    nodeSize: Size<StretchNumber>,
+    constants: AlgoConstants
+) {
+    if (flexLines.size == 1 && nodeSize.cross(constants.dir).isDefined) {
+        flexLines[0].crossSize =
+            (nodeSize.cross(constants.dir) - constants.paddingBorder.cross(constants.dir)).orElse(0.0f)
+    } else {
+        for (line in flexLines) {
+            //    1. Collect all the flex items whose inline-axis is parallel to the main-axis, whose
+            //       align-self is baseline, and whose cross-axis margins are both non-auto. Find the
+            //       largest of the distances between each item’s baseline and its hypothetical outer
+            //       cross-start edge, and the largest of the distances between each item’s baseline
+            //       and its hypothetical outer cross-end edge, and sum these two values.
+
+            //    2. Among all the items not collected by the previous step, find the largest
+            //       outer hypothetical cross size.
+
+            //    3. The used cross-size of the flex line is the largest of the numbers found in the
+            //       previous two steps and zero.
+
+            val maxBaseline: Float =
+                line.items.map { child -> child.baseline }.fold(0.0f) { acc, x -> acc.maybeMax(x) }
+            line.crossSize = line
+                .items
+                .map { child ->
+                    val childStyle = child.node.style
+                    if (childStyle.alignSelf(node.style) == AlignSelf.Baseline
+                        && childStyle.crossMarginStart(constants.dir) != StretchDimension.Auto
+                        && childStyle.crossMarginEnd(constants.dir) != StretchDimension.Auto
+                        && childStyle.crossSize(constants.dir) == StretchDimension.Auto
+                    ) {
+                        maxBaseline - child.baseline + child.hypotheticalOuterSize.cross(constants.dir)
+                    } else {
+                        child.hypotheticalOuterSize.cross(constants.dir)
+                    }
+                }
+                .fold(0.0f) { acc, x -> acc.maybeMax(x) }
+        }
+    }
 }
