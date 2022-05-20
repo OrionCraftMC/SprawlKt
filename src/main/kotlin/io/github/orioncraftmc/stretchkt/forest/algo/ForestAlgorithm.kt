@@ -610,6 +610,70 @@ private fun Forest.resolveFlexibleLengths(
     }
 }
 
+/**
+ * Determine the hypothetical cross size of each item.
+ *
+ * # [9.4. Cross Size Determination](https://www.w3.org/TR/css-flexbox-1/#cross-sizing)
+ *
+ * - [**Determine the hypothetical cross size of each item**](https://www.w3.org/TR/css-flexbox-1/#algo-cross-item)
+ *     by performing layout with the used main size and the available space, treating auto as fit-content.
+ */
+private fun Forest.determineHypotheticalCrossSize(
+    line: FlexLine,
+    constants: AlgoConstants,
+    availableSpace: Size<Float>
+) {
+    for (child in line.items) {
+        val childCross =
+            child.size.cross(constants.dir).maybeMax(child.minSize.cross(constants.dir))
+                .maybeMin(child.maxSize.cross(constants.dir))
+
+        val targetSize = child.targetSize.toStretchNumberSize()
+        child.hypotheticalInnerSize.setCross(
+            constants.dir,
+            computeInternal(
+                node = child.node,
+                nodeSize = Size(
+                    width = if (constants.isRow) {
+                        targetSize.width
+                    } else {
+                        childCross
+                    },
+                    height = if (constants.isRow) {
+                        childCross
+                    } else {
+                        targetSize.height
+                    },
+                ),
+                parentSize = Size(
+                    width = if (constants.isRow) {
+                        constants.containerSize.main(constants.dir)
+                    } else {
+                        availableSpace.width
+                    },
+                    height = if (constants.isRow) {
+                        availableSpace.height
+                    } else {
+                        constants.containerSize.main(constants.dir)
+                    },
+                ).toStretchNumberSize(),
+                performLayout = false, mainSize = false,
+            )
+                .size
+                .cross(constants.dir)
+                .maybeMax(child.minSize.cross(constants.dir))
+                .maybeMin(child.maxSize.cross(constants.dir)),
+        )
+
+        child
+            .hypotheticalOuterSize
+            .setCross(
+                constants.dir,
+                child.hypotheticalInnerSize.cross(constants.dir) + child.margin.cross(constants.dir)
+            )
+    }
+}
+
 internal fun Forest.computeInternal(
     node: NodeData,
     nodeSize: Size<StretchNumber>,
@@ -710,59 +774,9 @@ internal fun Forest.computeInternal(
 
     // 9.4. Cross Size Determination
 
-    // 7. Determine the hypothetical cross size of each item by performing layout with the
-    //    used main size and the available space, treating auto as fit-content.
-
+    // 7. Determine the hypothetical cross size of each item.
     for (line in flexLines) {
-        for (child in line.items) {
-            val childCross =
-                child.size.cross(constants.dir).maybeMax(child.minSize.cross(constants.dir))
-                    .maybeMin(child.maxSize.cross(constants.dir))
-
-            val targetSize = child.targetSize.toStretchNumberSize()
-            child.hypotheticalInnerSize.setCross(
-                constants.dir,
-                computeInternal(
-                    node = child.node,
-                    nodeSize = Size(
-                        width = if (constants.isRow) {
-                            targetSize.width
-                        } else {
-                            childCross
-                        },
-                        height = if (constants.isRow) {
-                            childCross
-                        } else {
-                            targetSize.height
-                        },
-                    ),
-                    parentSize = Size(
-                        width = if (constants.isRow) {
-                            constants.containerSize.main(constants.dir)
-                        } else {
-                            availableSpace.width
-                        },
-                        height = if (constants.isRow) {
-                            availableSpace.height
-                        } else {
-                            constants.containerSize.main(constants.dir)
-                        },
-                    ).toStretchNumberSize(),
-                    performLayout = false, mainSize = false,
-                )
-                    .size
-                    .cross(constants.dir)
-                    .maybeMax(child.minSize.cross(constants.dir))
-                    .maybeMin(child.maxSize.cross(constants.dir)),
-            )
-
-            child
-                .hypotheticalOuterSize
-                .setCross(
-                    constants.dir,
-                    child.hypotheticalInnerSize.cross(constants.dir) + child.margin.cross(constants.dir)
-                )
-        }
+        determineHypotheticalCrossSize(line, constants, availableSpace)
     }
 
     // TODO - probably should move this somewhere else as it doesn't make a ton of sense here but we need it below
