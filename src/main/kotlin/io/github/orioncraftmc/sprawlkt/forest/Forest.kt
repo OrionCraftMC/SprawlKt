@@ -7,7 +7,7 @@ import io.github.orioncraftmc.sprawlkt.number.StretchNumber
 import io.github.orioncraftmc.sprawlkt.style.Style
 
 /**
- * Forest - Backing datastructure for `Stretch` structs.
+ * Forest - Backing datastructure for `Sprawl` structs.
  *
  * PORT NOTE: The implementation of this class differs from the original implementation.
  */

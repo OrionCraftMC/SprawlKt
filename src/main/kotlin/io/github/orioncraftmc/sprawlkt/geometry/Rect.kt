@@ -32,7 +32,7 @@ data class Rect<T>(
         return if (direction.isRow()) {
             this.start
         } else {
-            this.end
+            this.top
         }
     }
 

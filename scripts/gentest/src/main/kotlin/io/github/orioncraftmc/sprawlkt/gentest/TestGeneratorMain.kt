@@ -61,9 +61,6 @@ fun main() {
             generateTest(it)
         }
 
-        val max = fixtures.maxByOrNull { it.rawDescription.length }!!
-        println(max.rawDescription)
-
     } finally {
         driver.close()
     }
@@ -77,7 +74,7 @@ fun testRootElement(client: ChromeDriver, wait: WebDriverWait, fixture: TestFixt
     } ?: throw IllegalStateException("Test fixture has no root element")
 
     val description = testRoot.getAttribute("__stretch_description__")
-        ?: throw IllegalStateException("Test fixture has no Stretch Description")
+        ?: throw IllegalStateException("Test fixture ${fixture.name} has no Stretch Description")
 
     println("Got description for ${fixture.name}")
 
