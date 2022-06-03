@@ -25,7 +25,7 @@ repositories {
 
 ````kotlin
 dependencies {
-    implementation("io.github.orioncraftmc:SprawlKt:1.0.0-SNAPSHOT")
+    implementation("io.github.orioncraftmc:SprawlKt:0.1.0")
 }
 ````
 
@@ -35,7 +35,7 @@ dependencies {
 // main.kt
 import io.github.orioncraftmc.sprawlkt.geometry.Size
 import io.github.orioncraftmc.sprawlkt.node.Node
-import io.github.orioncraftmc.sprawlkt.node.Stretch
+import io.github.orioncraftmc.sprawlkt.node.Sprawl
 import io.github.orioncraftmc.sprawlkt.style.Style
 import io.github.orioncraftmc.sprawlkt.style.enums.StretchDimension
 
@@ -48,15 +48,15 @@ fun main() {
         emptyList()
     )
 
-    // Or if you prefer, you can use the `Stretch` class to also create new nodes.
-    val node = Stretch.newNode(
+    // Or if you prefer, you can use the `Sprawl` class to also create new nodes.
+    val node = Sprawl.newNode(
         Style(
             size = Size(StretchDimension.Points(100f), StretchDimension.Points(100f)),
         ),
         listOf(child)
     )
 
-    val layout = Stretch.computeLayout(node, Size.undefinedNumber())
+    val layout = Sprawl.computeLayout(node, Size.undefinedNumber())
 
     println(layout)
 }

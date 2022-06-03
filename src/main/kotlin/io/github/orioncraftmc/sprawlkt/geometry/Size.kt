@@ -6,6 +6,7 @@ import io.github.orioncraftmc.sprawlkt.style.enums.StretchDimension
 
 
 data class Size<T>(var width: T, var height: T) {
+
     companion object {
 
         @JvmStatic

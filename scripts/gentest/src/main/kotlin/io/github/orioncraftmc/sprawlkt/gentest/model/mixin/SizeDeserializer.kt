@@ -23,6 +23,6 @@ object SizeDeserializer : JsonDeserializer<Size<StretchDimension>>() {
         ctxt: DeserializationContext
     ) =
         (get(info) as? ObjectNode)?.let { ctxt.readTreeAsValue(it, StretchDimension::class.java) }
-            ?: StretchDimension.Undefined
+            ?: StretchDimension.Auto
 
 }

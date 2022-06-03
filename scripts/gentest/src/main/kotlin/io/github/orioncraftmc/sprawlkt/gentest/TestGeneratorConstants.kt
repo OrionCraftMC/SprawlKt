@@ -16,6 +16,11 @@ internal val undefinedNumberMethod = MemberName(sizeCompanionType, Size.Companio
 internal val generatedTestsDir =
     File("src/test/kotlin/io/github/orioncraftmc/sprawlkt/tests/generated".replace("/", File.separator))
 
+internal const val enumsWildcardPackagePlaceholder = "io.github.orioncraftmc.sprawlkt.style.enums"
+internal const val enumsWildcardNamePlaceholder = "WildcardPlaceholder"
+internal const val enumsWildcardPlaceholder = "$enumsWildcardPackagePlaceholder.$enumsWildcardNamePlaceholder"
+internal const val enumsWildcardPlaceholderReplacement = "io.github.orioncraftmc.sprawlkt.style.enums.*"
+
 internal fun classNameFromFixture(fixture: TestFixture): String {
     return fixture.name.split("_")
         .joinToString("") { name -> name.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() } }

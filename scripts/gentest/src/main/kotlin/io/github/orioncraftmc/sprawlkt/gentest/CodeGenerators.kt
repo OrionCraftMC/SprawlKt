@@ -4,11 +4,12 @@ import io.github.orioncraftmc.sprawlkt.geometry.Rect
 import io.github.orioncraftmc.sprawlkt.geometry.Size
 import io.github.orioncraftmc.sprawlkt.number.StretchNumber
 import io.github.orioncraftmc.sprawlkt.style.Style
+import io.github.orioncraftmc.sprawlkt.style.enums.Display
 import io.github.orioncraftmc.sprawlkt.style.enums.StretchDimension
 import kotlin.reflect.full.memberProperties
 
 
-fun Style.toCode(): String {
+internal fun Style.toCode(): String {
     val props = listOf(
         Style::display,
         Style::positionType,
@@ -46,21 +47,27 @@ fun Style.toCode(): String {
                     is Float -> {
                         append(value.toCode())
                     }
+
                     is StretchDimension -> {
                         append(value.toCode())
                     }
+
                     is Size<*> -> {
                         append((value as Size<StretchDimension>).toCode())
                     }
+
                     is Rect<*> -> {
                         append((value as Rect<StretchDimension>).toCode())
                     }
+
                     is StretchNumber -> {
                         append(value.toCode())
                     }
+
                     is Enum<*> -> {
                         append(value.toCode())
                     }
+
                     else -> {
                         append("TODO()")
                     }
@@ -69,14 +76,14 @@ fun Style.toCode(): String {
             }
         }
 
-    return "${Style::class.qualifiedName}\n(\n${lines.joinToString("\n")}\n)"
+    return "${Style::class.java.toCode()}\n(\n${lines.joinToString("\n")}\n)"
 }
 
-fun StretchNumber.toCode(): String {
-    return "${StretchNumber::class.qualifiedName}.from(${this.asFloat().toCode()})"
+internal fun StretchNumber.toCode(): String {
+    return "${StretchNumber::class.java.toCode()}.from(${this.asFloat().toCode()})"
 }
 
-fun Float.toCode(): String {
+internal fun Float.toCode(): String {
     return when (this) {
         Float.POSITIVE_INFINITY -> "Float.POSITIVE_INFINITY"
         Float.NEGATIVE_INFINITY -> "Float.NEGATIVE_INFINITY"
@@ -84,29 +91,38 @@ fun Float.toCode(): String {
     }
 }
 
-fun Size<StretchDimension>.toCode() = """
-|${Size::class.qualifiedName}(
-|   width = ${width.toCode()},
-|   height = ${height.toCode()},
-|)
+internal fun Size<StretchDimension>.toCode() = """
+|${Size::class.java.toCode()}(
+|      width = ${width.toCode()},
+|      height = ${height.toCode()},
+|   )
 """.trimMargin()
 
-fun StretchDimension.toCode(): String {
+internal fun StretchDimension.toCode(): String {
     return when (this) {
-        is StretchDimension.Auto -> "${StretchDimension::class.qualifiedName}.Auto"
-        is StretchDimension.Undefined -> "${StretchDimension::class.qualifiedName}.Undefined"
-        is StretchDimension.Percent -> "${StretchDimension::class.qualifiedName}.Percent(${percent.toCode()}f)"
-        is StretchDimension.Points -> "${StretchDimension::class.qualifiedName}.Points(${points.toCode()})"
+        is StretchDimension.Auto -> "${StretchDimension::class.java.toCode()}.Auto"
+        is StretchDimension.Undefined -> "${StretchDimension::class.java.toCode()}.Undefined"
+        is StretchDimension.Percent -> "${StretchDimension::class.java.toCode()}.Percent(${percent.toCode()})"
+        is StretchDimension.Points -> "${StretchDimension::class.java.toCode()}.Points(${points.toCode()})"
     }
 }
 
-fun Rect<StretchDimension>.toCode() = """
-    |${Rect::class.qualifiedName}(
-    |    top = ${top.toCode()},
-    |    bottom = ${bottom.toCode()},
-    |    start = ${start.toCode()},
-    |    end = ${end.toCode()},
-    |)
+internal fun Rect<StretchDimension>.toCode() = """
+    |${Rect::class.java.toCode()}(
+    |        top = ${top.toCode()},
+    |        bottom = ${bottom.toCode()},
+    |        start = ${start.toCode()},
+    |        end = ${end.toCode()},
+    |    )
 """.trimMargin()
 
-fun Enum<*>.toCode() = "${this.javaClass.canonicalName}.${this.name}"
+internal fun Enum<*>.toCode(): String {
+    return javaClass.toCode() + ".${this.name}"
+
+}
+
+internal fun Class<*>.toCode() = if (canonicalName.startsWith(Display::class.java.packageName)) {
+    simpleName
+} else {
+    canonicalName
+}

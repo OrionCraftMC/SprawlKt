@@ -6,6 +6,7 @@ import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.TypeSpec
 import io.github.orioncraftmc.sprawlkt.gentest.model.StretchElement
 import java.io.File
+import java.util.concurrent.atomic.AtomicInteger
 
 internal fun generateTest(fixture: TestFixture) {
     // First, generate the directory
@@ -19,13 +20,17 @@ internal fun generateTest(fixture: TestFixture) {
     val fileSpec = FileSpec.builder(
         "io.github.orioncraftmc.sprawlkt.tests.generated",
         className
-    ).addType(
-        TypeSpec.classBuilder(className)
-            .addFunction(generateTestFunction(fixture))
-            .build()
-    ).build()
+    )
+        .addImport(
+            enumsWildcardPackagePlaceholder, enumsWildcardNamePlaceholder
+        )
+        .addType(
+            TypeSpec.classBuilder(className)
+                .addFunction(generateTestFunction(fixture))
+                .build()
+        ).build()
 
-    testFile.writeText(fileSpec.toString())
+    testFile.writeText(fileSpec.toString().replace(enumsWildcardPlaceholder, enumsWildcardPlaceholderReplacement))
 
 }
 
@@ -35,9 +40,14 @@ internal fun generateTestFunction(fixture: TestFixture): FunSpec {
         .apply {
             val root = fixture.description
 
-            val rootName = declareNode(root)
+            val rootName = declareNode(root, AtomicInteger(), true)
 
-            addStatement("%T.%M(%L, %T.%M())",
+            addCode("")
+            addComment(fixture.rawDescription)
+            addCode("")
+
+            addStatement(
+                "%T.%M(%L, %T.%M())",
                 sprawlType,
                 computeLayoutMethod, rootName,
                 sizeCompanionType,
@@ -50,30 +60,42 @@ internal fun generateTestFunction(fixture: TestFixture): FunSpec {
 }
 
 internal fun FunSpec.Builder.generateAsserts(node: StretchElement) {
-    addStatement("kotlin.test.assertEquals(%L, %T.%M(%L).size.width)", node.layout.size.width.toCode(),
+    addStatement(
+        "kotlin.test.assertEquals(%L, %T.%M(%L).size.width)", node.layout.size.width.toCode(),
         sprawlType,
-        layoutMethod, node.elementName)
-    addStatement("kotlin.test.assertEquals(%L, %T.%M(%L).size.height)", node.layout.size.height.toCode(),
+        layoutMethod, node.elementName
+    )
+    addStatement(
+        "kotlin.test.assertEquals(%L, %T.%M(%L).size.height)", node.layout.size.height.toCode(),
         sprawlType,
-        layoutMethod, node.elementName)
-    addStatement("kotlin.test.assertEquals(%L, %T.%M(%L).location.x)", node.layout.location.x.toCode(),
+        layoutMethod, node.elementName
+    )
+    addStatement(
+        "kotlin.test.assertEquals(%L, %T.%M(%L).location.x)", node.layout.location.x.toCode(),
         sprawlType,
-        layoutMethod, node.elementName)
-    addStatement("kotlin.test.assertEquals(%L, %T.%M(%L).location.y)", node.layout.location.y.toCode(),
+        layoutMethod, node.elementName
+    )
+    addStatement(
+        "kotlin.test.assertEquals(%L, %T.%M(%L).location.y)", node.layout.location.y.toCode(),
         sprawlType,
-        layoutMethod, node.elementName)
+        layoutMethod, node.elementName
+    )
 
     node.children.forEach {
         generateAsserts(it)
     }
 }
 
-internal fun FunSpec.Builder.declareNode(node: StretchElement, recursionCount: Int? = null): String {
+internal fun FunSpec.Builder.declareNode(
+    node: StretchElement,
+    recursionCount: AtomicInteger,
+    rootNode: Boolean
+): String {
     val childrenNodeNames = node.children.map {
-        this@declareNode.declareNode(it, recursionCount?.plus(1) ?: 0)
+        this@declareNode.declareNode(it, recursionCount, false)
     }
 
-    val name = if (recursionCount == null) "rootNode" else "node${recursionCount}"
+    val name = if (rootNode) "rootNode" else "node${recursionCount.incrementAndGet()}"
     node.elementName = name
 
     val styleCode = node.style.toCode()
