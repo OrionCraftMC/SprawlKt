@@ -1,6 +1,5 @@
 package io.github.orioncraftmc.sprawlkt.gentest
 
-import io.github.orioncraftmc.sprawlkt.gentest.model.StretchElement
 import org.openqa.selenium.By
 import org.openqa.selenium.WindowType
 import org.openqa.selenium.chrome.ChromeDriver
@@ -10,22 +9,6 @@ import org.openqa.selenium.support.ui.WebDriverWait
 import java.io.File
 import java.time.Duration
 
-data class TestFixture(val name: String, val path: File, var handle: String? = null) {
-    var rawDescription: String = ""
-        set(value) {
-            field = value
-            description = StretchElement.fromJson(value)
-        }
-
-    lateinit var description: StretchElement
-
-    fun <R> ChromeDriver.act(action: () -> R): R {
-        switchTo().window(handle)
-        val result = action()
-
-        return result
-    }
-}
 
 fun main() {
 
@@ -40,44 +23,51 @@ fun main() {
             .filter { it.isFile }
             .filter { it.extension == "html" }
             .map { TestFixture(it.nameWithoutExtension, it) }
-            .sortedBy { it.name }
-            .take(10)
+            .sortedBy { classNameFromFixture(it) }
             .toList()
 
 
     val options = ChromeOptions().apply {
         addArguments("--disable-gpu")
         logLevel = ChromeDriverLogLevel.SEVERE
+        setHeadless(true)
     }
     val driver = ChromeDriver(options)
     val wait = WebDriverWait(driver, Duration.ofSeconds(10))
 
-    fixtures.forEachIndexed { i, fixture ->
-        if (i != 0) driver.switchTo().newWindow(WindowType.TAB)
+    try {
+        fixtures.forEachIndexed { i, fixture ->
+            if (i != 0) driver.switchTo().newWindow(WindowType.TAB)
 
-        driver.navigate().to(fixture.path.toURI().toURL())
+            driver.navigate().to(fixture.path.toURI().toURL())
 
-        fixture.handle = driver.windowHandle
-    }
-
-
-    val handlesCount = driver.windowHandles.size
-    driver.windowHandles.forEachIndexed { i, handle ->
-        driver.switchTo().window(handle)
-        val fixture = fixtures.first { it.handle == handle }
-
-        testRootElement(driver, wait, fixture)
-
-        if (i != handlesCount - 1) {
-            driver.close()
+            fixture.handle = driver.windowHandle
         }
+
+
+        val handlesCount = driver.windowHandles.size
+        driver.windowHandles.forEachIndexed { i, handle ->
+            driver.switchTo().window(handle)
+            val fixture = fixtures.first { it.handle == handle }
+
+            testRootElement(driver, wait, fixture)
+
+            if (i != handlesCount - 1) {
+                driver.close()
+            }
+        }
+
+        fixtures.forEach {
+            generateTest(it)
+        }
+
+        val max = fixtures.maxByOrNull { it.rawDescription.length }!!
+        println(max.rawDescription)
+
+    } finally {
+        driver.close()
     }
 
-    println(fixtures.maxByOrNull { it.rawDescription.length }!!.rawDescription)
-
-    System.`in`.read()
-
-    driver.quit()
 
 }
 

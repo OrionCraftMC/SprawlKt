@@ -16,11 +16,11 @@ sealed class StretchDimension {
         override fun resolve(parentDimension: StretchNumber): StretchNumber = StretchNumber.Undefined
     }
 
-    class Points(private val points: Float) : StretchDimension() {
+    class Points(val points: Float) : StretchDimension() {
         override fun resolve(parentDimension: StretchNumber): StretchNumber = StretchNumber.from(points)
     }
 
-    class Percent(private val percent: Float) : StretchDimension() {
+    class Percent(val percent: Float) : StretchDimension() {
         override fun resolve(parentDimension: StretchNumber): StretchNumber =
             parentDimension * StretchNumber.from(percent)
     }
